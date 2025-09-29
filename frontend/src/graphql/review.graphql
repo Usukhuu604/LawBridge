@@ -1,0 +1,55 @@
+query GetReviewsByLawyer($lawyerId: ID!) {
+  getReviewsByLawyer(lawyerId: $lawyerId) {
+    id
+    clientId
+    lawyerId
+    rating
+    comment
+    createdAt
+    updatedAt
+  }
+}
+
+query GetReviewsByUser($clientId: ID!) {
+  getReviewsByUser(clientId: $clientId) {
+    id
+    clientId
+    lawyerId
+    rating
+    comment
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CreateReview(
+  $clientId: ID!
+  $lawyerId: ID!
+  $input: CreateReviewInput!
+) {
+  createReview(clientId: $clientId, lawyerId: $lawyerId, input: $input) {
+    id
+    clientId
+    lawyerId
+    rating
+    comment
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateReview($reviewId: ID!, $input: UpdateReviewInput!) {
+  updateReview(reviewId: $reviewId, input: $input) {
+    id
+    clientId
+    lawyerId
+    rating
+    comment
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteReview($reviewId: ID!) {
+  deleteReview(reviewId: $reviewId)
+}

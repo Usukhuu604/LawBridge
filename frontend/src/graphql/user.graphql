@@ -1,0 +1,6 @@
+query GetAdminSpecializations {
+  getAdminSpecializations {
+    id
+    categoryName
+  }
+}

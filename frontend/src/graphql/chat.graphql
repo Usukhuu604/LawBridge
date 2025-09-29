@@ -1,0 +1,20 @@
+ mutation SaveChatHistory($input: ChatHistoryInput!) {
+  saveChatHistory(input: $input) {
+    _id
+    userId
+    sessionId
+    userMessage
+    botResponse
+    createdAt
+  }
+}
+ query GetChatHistoryByUser($userId: String!) {
+  getChatHistoryByUser(userId: $userId) {
+    _id
+    userId
+    sessionId
+    userMessage
+    botResponse
+    createdAt
+  }
+}

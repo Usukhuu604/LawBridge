@@ -1,0 +1,35 @@
+query GetLawyerById($lawyerId: ID!) {
+  getLawyerById(lawyerId: $lawyerId) {
+    _id
+    lawyerId
+    clerkUserId
+    clientId
+    firstName
+    lastName
+    email
+    licenseNumber
+    bio
+    university
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    achievements {
+      _id
+      title
+      description
+      threshold
+      icon
+    }
+    status
+    document
+    rating
+    profilePicture
+    createdAt
+    updatedAt
+  }
+}

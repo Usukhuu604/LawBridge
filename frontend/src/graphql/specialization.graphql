@@ -1,0 +1,9 @@
+mutation CreateSpecialization($input: SpecializationInput) {
+  createSpecialization(input: $input) {
+    _id
+    lawyerId
+    specializationId
+    subscription
+    pricePerHour
+  }
+}

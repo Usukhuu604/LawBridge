@@ -1,0 +1,86 @@
+mutation CreateAppointment($input: CreateAppointmentInput!) {
+  createAppointment(input: $input) {
+    id
+    clientId
+    lawyerId
+    status
+    chatRoomId
+    subscription
+    slot {
+      day
+      startTime
+      endTime
+      booked
+    }
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    notes
+    specializationId
+  }
+}
+
+query GetAppointmentsByLawyer($lawyerId: String!) {
+  getAppointmentsByLawyer(lawyerId: $lawyerId) {
+    id
+    clientId
+    lawyerId
+    status
+    chatRoomId
+    price
+    subscription
+    specializationId
+    slot {
+      day
+      startTime
+      endTime
+      booked
+    }
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    createdAt
+    endedAt
+    notes
+  }
+}
+
+query GetAppointmentsByUser($clientId: String!) {
+  getAppointmentsByUser(clientId: $clientId) {
+    id
+    clientId
+    lawyerId
+    status
+    chatRoomId
+    price
+    subscription
+    specializationId
+    slot {
+      day
+      startTime
+      endTime
+      booked
+    }
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    createdAt
+    endedAt
+    notes
+  }
+}
