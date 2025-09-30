@@ -3,9 +3,16 @@ import { gql } from "graphql-tag";
 export const reviewsTypeDefs = gql`
   scalar Date
 
+  type ClientInfo {
+    id: ID!
+    name: String
+    email: String
+  }
+
   type Review {
     id: ID!
     clientId: ID!
+    clientInfo: ClientInfo
     lawyerId: ID!
     rating: Int!
     comment: String

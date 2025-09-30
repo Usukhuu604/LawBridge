@@ -29,7 +29,7 @@ export const documentTypeDefs = gql`
     images: [String!]!
     title: String!
     content: String
-    type: MediaType
+    type: DocumentMediaType
   }
 
   input ReviewDocumentInput {

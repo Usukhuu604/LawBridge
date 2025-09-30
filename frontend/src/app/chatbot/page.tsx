@@ -3,8 +3,10 @@ import React from "react";
 
 const ChatBotPage = () => {
   return (
-    <div className="h-screen w-screen">
-      <LawBridgeChat />
+    <div className="h-screen w-screen flex flex-col">
+      <div className="flex-grow h-full w-full">
+        <LawBridgeChat />
+      </div>
     </div>
   );
 };

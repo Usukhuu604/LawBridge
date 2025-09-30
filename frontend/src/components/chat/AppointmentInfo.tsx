@@ -50,10 +50,8 @@ const GET_LAWYER_BY_ID = gql`
 
 interface Appointment {
   id: string;
-  _id: string;
   clientId: string;
   lawyerId: string;
-  schedule: string;
   status: string;
   specializationId: string;
   subscription: boolean;
@@ -65,7 +63,6 @@ interface Appointment {
   };
   notes: string;
   createdAt: string;
-  updatedAt: string;
   chatRoomId: string;
 }
 
@@ -214,10 +211,7 @@ export default function AppointmentInfo({
           {appointment.clientId === currentUserId && (
             <div className="pt-3 border-t border-gray-100">
               <EndAppointmentButton
-                appointment={{
-                  ...appointment,
-                  id: appointment._id,
-                }}
+                appointment={appointment}
                 lawyerName={lawyerName}
                 lawyerDbId={lawyerData?.getLawyerById?._id || ""}
                 onAppointmentCompleted={onAppointmentCompleted}

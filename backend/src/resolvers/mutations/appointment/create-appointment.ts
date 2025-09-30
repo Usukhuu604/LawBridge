@@ -9,7 +9,13 @@ export const createAppointment: MutationResolvers["createAppointment"] = async (
   context
 ) => {
   try {
-    const { lawyerId, specializationId, slot, notes } = input;
+    // Validate authentication
+    if (!context.userId) {
+      throw new Error("User must be authenticated to create an appointment");
+    }
+
+    const { clientId, lawyerId, specializationId, slot, notes } = input;
+    
     const { day, startTime, endTime } = slot;
 
     // 1. Atomically check and book the slot
@@ -43,7 +49,7 @@ export const createAppointment: MutationResolvers["createAppointment"] = async (
 
     // 3. Create the appointment using the _id of the LawyerSpecialization
     const appointmentDoc = await Appointment.create({
-      clientId: context.userId,
+      clientId,
       lawyerId,
       schedule: new Date().toISOString(),
       status: "PENDING",
@@ -105,6 +111,9 @@ export const createAppointment: MutationResolvers["createAppointment"] = async (
     };
   } catch (error) {
     console.error("❌ Error creating appointment:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to create appointment: ${error.message}`);
+    }
     throw new Error("Failed to create appointment");
   }
 };

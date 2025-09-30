@@ -2,8 +2,14 @@
 
 import React from "react";
 import { Video, PhoneCall, Shield, PhoneOff, Calendar } from "lucide-react";
-import { User } from "@/app/chatroom/types/chat";
 import { Button } from "@/components/ui/button";
+
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  isLawyer: boolean;
+}
 
 interface ChatHeaderProps {
   user: User;
@@ -24,14 +30,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onEndAppointment,
   showEndAppointmentButton = false,
 }) => {
-  // Debug logging (commented out to prevent hydration issues)
-  // console.log("ChatHeader Debug:", {
-  //   showEndAppointmentButton,
-  //   onEndAppointment: !!onEndAppointment,
-  //   user: user?.name,
-  // });
-
-  // Improved: fallback for missing avatar, show initials, and more distinct header
   return (
     <div className="bg-gradient-to-r from-white via-gray-50 to-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-4 sm:py-5 shadow-lg">
       <div className="flex items-center justify-between">
@@ -41,21 +39,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             user.avatar !== "/default-avatar.svg" &&
             user.avatar !== "/default-avatar.svg" ? (
               <img
-                src={user.avatar}
+                src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${user.avatar}`}
                 alt={user.name}
                 className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 sm:border-3 border-white shadow-lg"
                 onError={(e) => {
                   // Fallback to initials if image fails to load
-                  console.log("Profile picture failed to load:", user.avatar);
                   e.currentTarget.style.display = "none";
                   e.currentTarget.nextElementSibling?.classList.remove(
                     "hidden"
-                  );
-                }}
-                onLoad={() => {
-                  console.log(
-                    "Profile picture loaded successfully:",
-                    user.avatar
                   );
                 }}
               />
@@ -92,6 +83,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Center area with email */}
+        <div className="flex-1 flex justify-center">
+          {user.email && (
+            <div className="text-sm text-gray-600 font-medium">
+              {user.email.split("@")[0]}
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
           {/* End Appointment Button - Show only when appropriate */}

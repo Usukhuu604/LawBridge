@@ -53,12 +53,9 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
 
   useEffect(() => {
     if (remoteParticipants.length > 0) {
-      console.log(
-        "[LiveKit] Remote participant joined:",
-        remoteParticipants.map((p) => p.identity)
-      );
+      console.log("[LiveKit] Remote participant joined:", remoteParticipants.map(p => p.identity));
     }
-  }, [remoteParticipants]);
+  }, [remoteParticipants.length]);
 
   // Find all tracks in the room
   const tracks = useTracks();
@@ -95,7 +92,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [remoteParticipants]);
+  }, [remoteParticipants.length]);
 
   // Sync state with LiveKit
   useEffect(() => {
@@ -165,7 +162,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       case ConnectionState.Disconnected:
         return <WifiOff className="w-4 h-4 text-red-400" />;
       default:
-        return <Wifi className="w-4 h-4 text-[#003366]" />;
+        return <Wifi className="w-4 h-4 text-blue-400" />;
     }
   };
 
@@ -248,7 +245,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
               trackRef={remoteScreenShareTrackRef}
               className="w-full h-full object-contain"
             />
-            <div className="absolute top-4 left-4 px-3 py-1 bg-[#003366] text-white text-sm rounded-full font-medium">
+            <div className="absolute top-4 left-4 px-3 py-1 bg-blue-600 text-white text-sm rounded-full font-medium">
               Screen Sharing
             </div>
           </div>
@@ -382,7 +379,7 @@ const ControlButton: React.FC<{
     switch (variant) {
       case "primary":
         return active
-          ? "bg-[#003366] hover:bg-[#002244] text-white"
+          ? "bg-blue-600 hover:bg-blue-700 text-white"
           : "bg-slate-700 hover:bg-slate-600 text-white";
       case "danger":
         return active

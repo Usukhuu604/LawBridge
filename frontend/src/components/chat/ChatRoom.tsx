@@ -1,17 +1,27 @@
 import React, { useState } from "react";
-import { ChatHeader } from "./ChatHeader";
-import { MessageList } from "./MessageList";
-import { ChatInput } from "./ChatInput";
+import MessageList from "./MessageList";
+import ChatInput from "./ChatInput";
 import TypingIndicator from "./TypingIndicator";
-import { VideoCallModal } from "@/components/chat/VideoCallModal";
+import { ChatHeader } from "./ChatHeader";
+import AppointmentInfo from "./AppointmentInfo";
+import { VideoCallModal } from "./VideoCallModal";
 import { LiveKitRoom } from "@livekit/components-react";
 import useChatRoomState from "@/app/chatroom/hooks/useChatRoomState";
-import AppointmentInfo from "./AppointmentInfo";
 import { EndAppointmentButton } from "@/components/appointment";
 import { useQuery } from "@apollo/client";
 import { gql } from "@apollo/client";
 import { X, Calendar, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Trash2, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const GET_CHATROOM_BY_ID = gql`
   query GetChatRoomById($id: String!) {
@@ -116,30 +126,35 @@ interface ChatRoomProps {
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
-  const router = useRouter();
-  const chatRoomState = useChatRoomState(chatRoomId);
-  const {
-    messages,
-    setMessages,
-    user,
-    otherUser,
-    typingUsers,
-    isSending,
-    isConnected,
-    handleSendMessage,
-    handleSendFile,
-    handleTyping,
-    messagesEndRef,
-    handleJoinCall,
-    handleLeaveCall,
-    activeCallType,
-    liveKitToken,
-  } = chatRoomState;
-  const [showUserInfo, setShowUserInfo] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEndAppointmentModal, setShowEndAppointmentModal] = useState(false);
   const [modalStep, setModalStep] = useState<"confirmation" | "review">(
     "confirmation"
   );
+  const router = useRouter();
+
+  const {
+    user,
+    messages,
+    setMessages,
+    typingUsers,
+    isSending,
+    isLoading,
+    error,
+    handleSendMessage,
+    handleSendFile,
+    handleTyping,
+    messagesEndRef,
+    otherUser,
+    handleDeleteAllMessages,
+    isDeletingMessages,
+    handleJoinCall,
+    handleLeaveCall,
+    activeCallType,
+    isJoiningCall,
+    isCallConnected,
+    liveKitToken,
+  } = useChatRoomState(chatRoomId);
 
   // Get chat room details to get appointmentId
   const { data: chatRoomData } = useQuery(GET_CHATROOM_BY_ID, {
@@ -147,15 +162,14 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
     skip: !chatRoomId,
   });
 
-  // Get appointment by ID from chat room
+  const appointmentId = chatRoomData?.getChatRoomById?.appointmentId;
+
+  // Get appointment details
   const { data: appointmentData } = useQuery(GET_APPOINTMENT_BY_ID, {
-    variables: {
-      getAppointmentByIdId: chatRoomData?.getChatRoomById?.appointmentId || "",
-    },
-    skip: !chatRoomData?.getChatRoomById?.appointmentId,
+    variables: { getAppointmentByIdId: appointmentId },
+    skip: !appointmentId,
   });
 
-  // Get the appointment directly
   const appointment: Appointment | null =
     appointmentData?.getAppointmentById || null;
 
@@ -170,7 +184,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
   // Get the lawyer's database ID
   const lawyerDbId = lawyerData?.getLawyerById?._id;
 
-  // Get lawyer name from appointment or use otherUser
+  // Get lawyer name for display
   const lawyerName = appointment?.specialization?.categoryName
     ? `${appointment.specialization.categoryName} специалист`
     : otherUser?.name || "Өмгөөлөгч";
@@ -180,6 +194,19 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
     appointment &&
     appointment.clientId === user?.id &&
     appointment.status === "PENDING";
+
+  const handleDeleteConfirm = async () => {
+    await handleDeleteAllMessages();
+    setShowDeleteDialog(false);
+  };
+
+  const handleCallAction = (type: "video" | "audio") => {
+    if (activeCallType) {
+      handleLeaveCall();
+    } else {
+      handleJoinCall(type);
+    }
+  };
 
   const handleEndAppointment = () => {
     setModalStep("confirmation");
@@ -205,26 +232,23 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
     // Navigate to home page after successful review submission
     setTimeout(() => {
       router.push("/");
-    }, 2000); // 2 second delay to show completion message
-  };
-
-  const handleCallAction = (type: "video" | "audio") => {
-    if (activeCallType) {
-      handleLeaveCall();
-    } else {
-      handleJoinCall(type);
-    }
+    }, 2000);
   };
 
   const handleAppointmentCompleted = (appointmentId: string) => {
     console.log(`Appointment ${appointmentId} completed`);
-    // You can add additional logic here, like showing a success message
-    // or refreshing the appointment data
+    // You can add additional logic here if needed
   };
 
-  React.useEffect(() => {
-    console.log("LiveKit Token (effect):", liveKitToken);
-  }, [liveKitToken]);
+  if (!user) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center text-gray-500">
+          Please log in to continue
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -241,7 +265,6 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
         <AppointmentInfo
           chatRoomId={chatRoomId}
           currentUserId={user?.id || ""}
-          onAppointmentCompleted={handleAppointmentCompleted}
         />
 
         <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50 dark:bg-gray-900 relative min-h-0 chat-scroll-container">
@@ -250,53 +273,80 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
               messages={messages}
               setMessages={setMessages}
               currentUserId={user?.id}
+              isLoading={isLoading}
               otherUserAvatar={otherUser?.avatar}
             />
             <TypingIndicator typingUsers={typingUsers} />
             <div ref={messagesEndRef} />
           </div>
         </div>
-        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-4 z-10">
-          <ChatInput
-            onSend={handleSendMessage}
-            onFileChange={handleSendFile}
-            onTyping={handleTyping}
-            isSending={isSending}
-            disabled={!isConnected}
-          />
-        </div>
-        {showUserInfo && (
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-lg z-30 transform transition-transform duration-300">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Хэрэглэгчийн мэдээлэл
-                </h3>
-                <button className="p-2" onClick={() => setShowUserInfo(false)}>
-                  ×
-                </button>
-              </div>
-              <div className="text-center">
-                {/* Avatar and user info here */}
-              </div>
-            </div>
-            <div className="p-4 space-y-2">
-              <button
-                className="w-full justify-start"
-                onClick={() => handleCallAction("audio")}
-              >
-                Дуудлага хийх
-              </button>
-              <button
-                className="w-full justify-start"
-                onClick={() => handleCallAction("video")}
-              >
-                Видео дуудлага
-              </button>
-            </div>
+
+        {/* Error display */}
+        {error && (
+          <div className="flex-shrink-0 bg-red-50 border-t border-red-200 px-4 py-2">
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
+
+        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-4 z-10">
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            onSendFile={handleSendFile}
+            disabled={isLoading}
+            isSending={isSending}
+            onTyping={handleTyping}
+          />
+        </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Delete All Messages
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete all messages in this chat? This
+                action cannot be undone.
+                <br />
+                <span className="font-semibold text-red-600">
+                  {messages.length} message{messages.length !== 1 ? "s" : ""}{" "}
+                  will be permanently deleted.
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeletingMessages}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteConfirm}
+                disabled={isDeletingMessages}
+                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              >
+                {isDeletingMessages ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete All Messages
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
+
+      {/* LiveKit Room and Video Call Modal */}
       {activeCallType && liveKitToken && (
         <LiveKitRoom
           token={liveKitToken}
@@ -304,17 +354,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
           connect
         >
           <VideoCallModal
+            user={otherUser}
             onEndCall={handleLeaveCall}
             callType={activeCallType}
-            user={otherUser}
           />
         </LiveKitRoom>
-      )}
-      {showUserInfo && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-20 md:hidden"
-          onClick={() => setShowUserInfo(false)}
-        />
       )}
 
       {/* End Appointment Modal - Single modal with two steps */}
@@ -342,28 +386,20 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
               </div>
             </div>
 
-            {/* Content */}
             <div className="p-6">
               {modalStep === "confirmation" ? (
-                <div className="space-y-6">
-                  {/* Icon and description */}
-                  <div className="text-center space-y-4">
-                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary-custom/20 to-accent/20 rounded-full flex items-center justify-center">
-                      <Calendar className="w-8 h-8 text-primary-custom" />
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Calendar className="h-8 w-8 text-yellow-600" />
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        Цаг захиалга дуусгах уу?
-                      </h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        Та{" "}
-                        <span className="font-semibold text-primary-custom">
-                          {lawyerName}
-                        </span>
-                        -тай хийсэн цаг захиалгаа дуусгахдаа итгэлтэй байна уу?
-                        Цаг захиалгаа төлөвлөсөн хугацаанаас өмнө дуусгаж болно.
-                      </p>
-                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      Цаг захиалга дуусгах уу?
+                    </h4>
+                    <p className="text-gray-600 text-sm">
+                      Та {lawyerName}-тэй хийсэн цаг захиалгаа дуусгаж, үнэлгээ
+                      өгөх боломжтой.
+                    </p>
                   </div>
 
                   {/* Action buttons */}
@@ -381,38 +417,24 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
                         background:
                           "linear-gradient(to right, #003366, #004080)",
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "linear-gradient(to right, #002244, #003366)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          "linear-gradient(to right, #003366, #004080)";
-                      }}
                     >
-                      Тийм, дуусгах
+                      Үргэлжлүүлэх
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Review header */}
-                  <div className="text-center space-y-3">
-                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-accent/20 to-primary-custom/20 rounded-full flex items-center justify-center">
-                      <Star className="w-8 h-8 text-accent" />
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Star className="h-8 w-8 text-green-600" />
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
-                        Үнэлгээ өгөх
-                      </h4>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        <span className="font-semibold text-primary-custom">
-                          {lawyerName}
-                        </span>
-                        -тай хийсэн цаг захиалгаа дуусгаж байна. Таны үнэлгээ
-                        маш чухал!
-                      </p>
-                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      Үнэлгээ өгөх
+                    </h4>
+                    <p className="text-gray-600 text-sm">
+                      {lawyerName}-тэй хийсэн үйлчлүүлэлтийн талаар үнэлгээ өгнө
+                      үү.
+                    </p>
                   </div>
 
                   {/* Review form */}

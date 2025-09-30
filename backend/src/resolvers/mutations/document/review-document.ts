@@ -1,14 +1,18 @@
 import { Document } from "@/models";
-import { DocumentMediaType, MutationResolvers, ReviewStatus } from "@/types/generated";
+import {
+  DocumentMediaType,
+  MutationResolvers,
+  ReviewStatus,
+} from "@/types/generated";
 
 export const reviewDocument: MutationResolvers["reviewDocument"] = async (
   _,
   { input },
   context
 ) => {
-  // if (!context.userId) {
-  //   throw new Error("Нэвтэрсэн өмгөөлөгч байхгүй байна.");
-  // }
+  if (!context.userId) {
+    throw new Error("Нэвтэрсэн өмгөөлөгч байхгүй байна.");
+  }
 
   const updated = await Document.findByIdAndUpdate(
     input.documentId,

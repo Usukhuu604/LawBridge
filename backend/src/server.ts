@@ -18,13 +18,13 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import { clerkClient, getAuth, clerkMiddleware } from "@clerk/express";
 import { verifyToken } from "@clerk/backend";
 import { AccessToken } from "livekit-server-sdk";
+import { buildContext } from "@/lib/context";
 
 import { typeDefs } from "./schemas";
 import { resolvers } from "./resolvers";
 import { Context } from "./types/context";
 import { Message } from "./models/message.model";
 import { chatWithBot, clearChatHistory, getChatStats } from "./lib/langchain";
-import { buildContext } from "./lib/context";
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
@@ -47,10 +47,58 @@ async function startServer() {
   const app = express();
   const httpServer = createServer(app);
 
-  // CORS Configuration - Allow all origins
+  // CORS Configuration
   app.use(
     cors({
-      origin: "*",
+      origin: function (origin, callback) {
+        const allowedOrigins = [
+          "http://localhost:3000",
+          "http://localhost:3001",
+          "http://localhost:3002",
+          "http://localhost:3003",
+          "http://localhost:3004",
+          "http://localhost:3005",
+          "http://127.0.0.1:3000",
+          "http://127.0.0.1:3001",
+          "http://127.0.0.1:3002",
+          "http://127.0.0.1:3003",
+          "http://127.0.0.1:3004",
+          "http://127.0.0.1:3005",
+          "https://studio.apollographql.com",
+          "https://studio.apollographql.com/sandbox/explorer",
+          "https://lawbridge-server.onrender.com",
+          "https://lawbridge-deploy.vercel.app",
+          "https://lawbridge11.vercel.app",
+          "https://lawbridge22.vercel.app",
+          "https://lawbridge33.vercel.app",
+          "https://lawbridge44.vercel.app",
+          "https://lawbridge55.vercel.app",
+          "https://lawbridge66.vercel.app",
+          "https://lawbridge77.vercel.app",
+          "https://lawbridge88.vercel.app",
+          "https://lawbridge99.vercel.app",
+          "https://lawbridge100.vercel.app",
+        ];
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+          return callback(null, true);
+        }
+
+        // Check if origin is in allowed list
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        // Allow localhost with any port for development
+        if (
+          origin.match(/^https?:\/\/localhost:\d+$/) ||
+          origin.match(/^https?:\/\/127\.0\.0\.1:\d+$/)
+        ) {
+          return callback(null, true);
+        }
+
+        callback(new Error("Not allowed by CORS"));
+      },
       credentials: true,
     })
   );
@@ -228,11 +276,69 @@ async function startServer() {
   const io = new SocketIOServer(httpServer, {
     path: "/socket.io",
     cors: {
-      origin: "*",
+      origin: [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:3003",
+        "http://127.0.0.1:3004",
+        "http://127.0.0.1:3005",
+        "https://lawbridge-server.onrender.com",
+        "https://studio.apollographql.com/sandbox/explorer",
+        "https://lawbridge-deploy.vercel.app",
+        "https://lawbridge11.vercel.app",
+        "https://lawbridge22.vercel.app",
+        "https://lawbridge33.vercel.app",
+        "https://lawbridge44.vercel.app",
+        "https://lawbridge55.vercel.app",
+        "https://lawbridge66.vercel.app",
+        "https://lawbridge77.vercel.app",
+        "https://lawbridge88.vercel.app",
+        "https://lawbridge99.vercel.app",
+        "https://lawbridge100.vercel.app",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
+
+  // Helper function to get unique online users
+  const getUniqueOnlineUsers = () => {
+    const allUsers = Array.from(connectedUsers.values());
+    console.log(
+      `🔍 All connected users before deduplication:`,
+      allUsers.length,
+      allUsers.map((u) => ({
+        id: u.id,
+        username: u.username,
+        socketId: u.socketId,
+      }))
+    );
+
+    const uniqueUsers = allUsers.reduce((acc, user) => {
+      if (!acc.find((u) => u.id === user.id)) {
+        acc.push(user);
+      }
+      return acc;
+    }, [] as any[]);
+
+    console.log(
+      `✅ Unique users after deduplication:`,
+      uniqueUsers.length,
+      uniqueUsers.map((u) => ({
+        id: u.id,
+        username: u.username,
+        socketId: u.socketId,
+      }))
+    );
+    return uniqueUsers;
+  };
 
   // Socket.IO Authentication Middleware
   io.use(async (socket: SocketWithAuth, next) => {
@@ -264,23 +370,105 @@ async function startServer() {
 
     console.log(`⚡ Socket Connected: ${user.username} (ID: ${socket.id})`);
 
-    // Add user to connected users map
+    // Store socket connection
     connectedUsers.set(socket.id, { ...user, socketId: socket.id });
     socket.join(user.id);
+    console.log(`➕ Added user ${user.username} with socket ${socket.id}`);
 
-    // Emit online users list
-    io.emit("onlineUsers", Array.from(connectedUsers.values()));
+    // Emit online users list (deduplicated by user ID)
+    const uniqueUsers = getUniqueOnlineUsers();
+    console.log(
+      `📤 Emitting ${uniqueUsers.length} unique users to all clients`
+    );
+    io.emit("onlineUsers", uniqueUsers);
 
     // Join Chat Room Event
-    socket.on("join-room", (roomId: string) => {
+    socket.on("joinRoom", (roomId: string) => {
       socket.join(roomId);
       console.log(`🏠 Socket ${socket.id} joined room ${roomId}`);
     });
 
     // Leave Chat Room Event
-    socket.on("leave-room", (roomId: string) => {
+    socket.on("leaveRoom", (roomId: string) => {
       socket.leave(roomId);
       console.log(`🚪 Socket ${socket.id} left room ${roomId}`);
+    });
+
+    // Send Message Event - Real-time messaging
+    socket.on("sendMessage", async ({ roomId, message }) => {
+      console.log(`📩 Message received in room ${roomId}:`, message);
+      console.log(
+        `📩 Full message data:`,
+        JSON.stringify({ roomId, message }, null, 2)
+      );
+
+      if (!roomId || !message) {
+        console.error("❌ Missing roomId or message");
+        socket.emit("messageError", { error: "Missing roomId or message" });
+        return;
+      }
+
+      try {
+        console.log(`💾 Attempting to save message to database...`);
+        console.log(`💾 Room ID: ${roomId}`);
+        console.log(`💾 Message data:`, {
+          userId: message.userId,
+          type: message.type || "TEXT",
+          content: message.content,
+          createdAt: new Date().toISOString(),
+        });
+
+        // Save message to database
+        const savedMessage = await Message.findOneAndUpdate(
+          { chatRoomId: roomId },
+          {
+            $push: {
+              ChatRoomsMessages: {
+                _id: new mongoose.Types.ObjectId(),
+                userId: message.userId,
+                type: message.type || "TEXT",
+                content: message.content,
+                createdAt: new Date().toISOString(),
+              },
+            },
+          },
+          { upsert: true, new: true }
+        );
+
+        console.log(`💾 Message saved to database:`, savedMessage);
+        console.log(
+          `💾 Saved message ChatRoomsMessages length:`,
+          savedMessage?.ChatRoomsMessages?.length
+        );
+
+        // Get the last message ID
+        const lastMessage =
+          savedMessage.ChatRoomsMessages[
+            savedMessage.ChatRoomsMessages.length - 1
+          ];
+        const messageId =
+          (lastMessage as any)._id?.toString() ||
+          `${message.userId}-${message.createdAt}`;
+
+        // Broadcast to other users in the room (excluding sender)
+        socket.to(roomId).emit("newMessage", {
+          ...message,
+          fromSelf: false,
+          id: messageId,
+        });
+
+        // Send back to sender for confirmation (optional)
+        socket.emit("newMessage", {
+          ...message,
+          fromSelf: true,
+          id: messageId,
+        });
+
+        console.log(`📤 Message broadcasted to room ${roomId}`);
+      } catch (error) {
+        console.error("❌ Error saving message:", error);
+        socket.emit("messageError", { error: "Failed to save message" });
+      }
     });
 
     // Direct Chat Message Event (Alternative to GraphQL)
@@ -346,7 +534,13 @@ async function startServer() {
       if (disconnectedUser) {
         console.log(`❌ Socket Disconnected: ${disconnectedUser.username}`);
         connectedUsers.delete(socket.id);
-        io.emit("onlineUsers", Array.from(connectedUsers.values()));
+
+        // Emit online users list (deduplicated by user ID)
+        const uniqueUsers = getUniqueOnlineUsers();
+        console.log(
+          `📤 Emitting ${uniqueUsers.length} unique users after disconnect`
+        );
+        io.emit("onlineUsers", uniqueUsers);
       }
     });
   });
@@ -362,7 +556,23 @@ async function startServer() {
   app.use(
     "/graphql",
     expressMiddleware(apolloServer, {
-      context: async ({ req }) => await buildContext(req),
+
+      context: async ({ req }) => {
+        try {
+          const context = await buildContext(req);
+          return {
+            ...context,
+            io: io, // Pass your Socket.IO instance
+          };
+        } catch (error) {
+          console.error("Error creating context:", error);
+          return {
+            req,
+            db: mongoose.connection.db,
+            io: io,
+          };
+        }
+      },
     })
   );
 

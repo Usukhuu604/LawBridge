@@ -7,8 +7,7 @@ import {
 
 export const createDocument: MutationResolvers["createDocument"] = async (
   _,
-  { input },
-  context
+  { input }
 ) => {
   try {
     // if (!context.userId) {
@@ -20,7 +19,7 @@ export const createDocument: MutationResolvers["createDocument"] = async (
       title: input.title,
       content: input.content || "",
       type: input.type || DocumentMediaType.Text,
-      status: ReviewStatus.Pending, 
+      status: ReviewStatus.Pending,
       reviewComment: "",
     });
 
@@ -31,7 +30,7 @@ export const createDocument: MutationResolvers["createDocument"] = async (
       images: created.images,
       title: created.title,
       content: created.content,
-      type: (created.type ?? DocumentMediaType.Text) as DocumentMediaType, 
+      type: (created.type ?? DocumentMediaType.Text) as DocumentMediaType,
       status: (created.status ?? ReviewStatus.Pending) as ReviewStatus,
       reviewComment: created.reviewComment,
     };

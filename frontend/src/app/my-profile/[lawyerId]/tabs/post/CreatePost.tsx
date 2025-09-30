@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useState, useRef, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 
 import {
   Loader2,
@@ -32,11 +34,8 @@ interface CreatePostProps {
   isModal?: boolean;
 }
 
-const CreatePost = ({
-  onPostCreated,
-  onPostStart,
-  isModal = false,
-}: CreatePostProps) => {
+const CreatePost = ({ onPostCreated, onPostStart, isModal = false }: CreatePostProps) => {
+  const { user } = useUser();
   const [title, setTitle] = useState("");
   const [postContent, setPostContent] = useState("");
   const [specialization, setSpecialization] = useState<string[]>([]);
@@ -57,30 +56,27 @@ const CreatePost = ({
 
   const { data: specData } = useGetAdminSpecializationsQuery();
 
+  // Konami Code sequence: ↑↑↓↓←→←→BA
+  const konamiSequence = [
+    "ArrowUp",
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "ArrowLeft",
+    "ArrowRight",
+    "KeyB",
+    "KeyA",
+  ];
+
   // Easter egg: Konami code detection
   useEffect(() => {
-    // Konami Code sequence: ↑↑↓↓←→←→BA
-    const konamiSequence = [
-      "ArrowUp",
-      "ArrowUp",
-      "ArrowDown",
-      "ArrowDown",
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowLeft",
-      "ArrowRight",
-      "KeyB",
-      "KeyA",
-    ];
-
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       const newSequence = [...konamiCode, e.code].slice(-10);
       setKonamiCode(newSequence);
 
-      if (
-        JSON.stringify(newSequence.slice(-10)) ===
-        JSON.stringify(konamiSequence)
-      ) {
+      if (JSON.stringify(newSequence.slice(-10)) === JSON.stringify(konamiSequence)) {
         setEasterEggActive(true);
         setSuccess("🎉 Konami Code activated! Developer mode enabled! 🚀");
         setTimeout(() => setSuccess(null), 5000);
@@ -94,9 +90,7 @@ const CreatePost = ({
   const [createPost, { loading }] = useMutation(CREATE_POST, {
     onCompleted: (data) => {
       console.log("✅ Post created successfully:", data);
-      const successMsg = easterEggActive
-        ? "🚀 Post created with developer magic! ✨"
-        : "Нийтлэл амжилттай үүслээ!";
+      const successMsg = easterEggActive ? "🚀 Post created with developer magic! ✨" : "Нийтлэл амжилттай үүслээ!";
       setSuccess(successMsg);
 
       setTitle("");
@@ -116,6 +110,11 @@ const CreatePost = ({
         onPostCreated();
       }
     },
+    // Refetch queries to show new data immediately
+    refetchQueries: [
+      "GetLawyerPosts", // Refetch lawyer posts
+      "GetPosts", // Refetch all posts
+    ],
     onError: (error) => {
       console.error("❌ Post creation failed:", error);
       console.error("❌ Error details:", error.message);
@@ -157,50 +156,28 @@ const CreatePost = ({
       throw new Error("No URL returned from upload");
     } catch (error) {
       console.error("Upload error:", error);
-      setError(
-        error instanceof Error ? error.message : "Файл илгээхэд алдаа гарлаа."
-      );
+      setError(error instanceof Error ? error.message : "Файл илгээхэд алдаа гарлаа.");
       setUploading(false);
       console.log("❌ Uploading state set to false (error)");
       return null;
     }
   };
 
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "image" | "video" | "audio"
-  ) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video" | "audio") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     console.log(`📁 File selected for ${type}:`, file);
 
     // Validate file type
-    const allowedImageTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
+    const allowedImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
     const allowedVideoTypes = ["video/mp4", "video/webm", "video/quicktime"];
-    const allowedAudioTypes = [
-      "audio/mpeg",
-      "audio/wav",
-      "audio/ogg",
-      "audio/mp3",
-    ];
+    const allowedAudioTypes = ["audio/mpeg", "audio/wav", "audio/ogg", "audio/mp3"];
 
-    const allAllowedTypes = [
-      ...allowedImageTypes,
-      ...allowedVideoTypes,
-      ...allowedAudioTypes,
-    ];
+    const allAllowedTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedAudioTypes];
 
     if (!allAllowedTypes.includes(file.type)) {
-      setError(
-        "Файлын төрөл дэмжигдэхгүй байна. Зураг, видео, эсвэл аудио файл оруулна уу."
-      );
+      setError("Файлын төрөл дэмжигдэхгүй байна. Зураг, видео, эсвэл аудио файл оруулна уу.");
       return;
     }
 
@@ -274,6 +251,14 @@ const CreatePost = ({
     }
 
     console.log("✅ Validation passed, proceeding with post creation");
+    console.log("🔍 Current URL path:", window.location.pathname);
+    console.log("🔍 Lawyer ID from URL:", window.location.pathname.split("/").pop());
+    console.log("👤 User info:", {
+      id: user?.id,
+      role: user?.publicMetadata?.role,
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+    });
 
     // Call onPostStart if provided
     if (onPostStart) {
@@ -336,6 +321,7 @@ const CreatePost = ({
           video: finalVideoUrl || undefined,
           audio: finalAudioUrl || undefined,
         },
+        lawyerId: user?.id || "default-lawyer-id", // Include lawyerId in the input
       };
 
       console.log("📝 Creating post with data:", postData);
@@ -353,10 +339,7 @@ const CreatePost = ({
   };
 
   // Helper function to convert blob URL to File
-  const blobToFile = async (
-    blobUrl: string,
-    filename: string
-  ): Promise<File> => {
+  const blobToFile = async (blobUrl: string, filename: string): Promise<File> => {
     const response = await fetch(blobUrl);
     const blob = await response.blob();
     return new File([blob], filename, { type: blob.type });
@@ -370,10 +353,7 @@ const CreatePost = ({
   const content = (
     <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {error && (
-        <Alert
-          variant="destructive"
-          className="border-red-200 bg-red-50 text-red-800 rounded-lg text-sm sm:text-base"
-        >
+        <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800 rounded-lg text-sm sm:text-base">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -382,18 +362,13 @@ const CreatePost = ({
       {success && (
         <Alert className="border-green-200 bg-green-50 text-green-800 rounded-lg text-sm sm:text-base">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            {success}
-          </AlertDescription>
+          <AlertDescription className="text-green-800">{success}</AlertDescription>
         </Alert>
       )}
 
       {/* Title Input */}
       <div className="space-y-2 sm:space-y-3">
-        <Label
-          htmlFor="title"
-          className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
-        >
+        <Label htmlFor="title" className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
           Гарчиг
         </Label>
         <Input
@@ -405,28 +380,19 @@ const CreatePost = ({
           className="border border-gray-200 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:border-[#003365] focus:ring-1 focus:ring-[#003365] bg-white transition-all duration-200 text-sm sm:text-base"
         />
         <div className="flex justify-between items-center">
-          <div className="text-xs text-gray-500">
-            {title.length > 60 && "📝 Урт гарчиг байна"}
-          </div>
+          <div className="text-xs text-gray-500">{title.length > 60 && "📝 Урт гарчиг байна"}</div>
           <div className="text-xs text-gray-400">{title.length}/80</div>
         </div>
       </div>
 
       {/* Content Textarea */}
       <div className="space-y-2 sm:space-y-3">
-        <Label
-          htmlFor="content"
-          className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2"
-        >
+        <Label htmlFor="content" className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
           Агуулга
         </Label>
         <Textarea
           id="content"
-          placeholder={
-            easterEggActive
-              ? "// Write your epic content here 🚀"
-              : "Нийтлэлийн агуулга бичнэ үү..."
-          }
+          placeholder={easterEggActive ? "// Write your epic content here 🚀" : "Нийтлэлийн агуулга бичнэ үү..."}
           rows={4}
           value={postContent}
           maxLength={3000}
@@ -455,33 +421,23 @@ const CreatePost = ({
           Хуулийн салбар
         </Label>
         <div className="flex flex-wrap gap-2 sm:gap-3">
-          {specData?.getAdminSpecializations?.map(
-            (spec: { id: string; categoryName: string }) => (
-              <button
-                key={spec.id}
-                type="button"
-                onClick={() =>
-                  setSpecialization((prev) =>
-                    prev.includes(spec.id)
-                      ? prev.filter((id) => id !== spec.id)
-                      : [...prev, spec.id]
-                  )
-                }
-                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 border ${
-                  specialization.includes(spec.id)
-                    ? "bg-[#003365] text-white border-[#003365] shadow-sm"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-[#003365] hover:text-[#003365] hover:bg-gray-50"
-                }`}
-              >
-                <span className="truncate max-w-[120px] sm:max-w-none">
-                  {spec.categoryName}
-                </span>
-                {specialization.includes(spec.id) && easterEggActive && (
-                  <span className="ml-1">{getRandomEmoji()}</span>
-                )}
-              </button>
-            )
-          )}
+          {specData?.getAdminSpecializations?.map((spec: { id: string; categoryName: string }) => (
+            <button
+              key={spec.id}
+              type="button"
+              onClick={() =>
+                setSpecialization((prev) => (prev.includes(spec.id) ? prev.filter((id) => id !== spec.id) : [...prev, spec.id]))
+              }
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 border ${
+                specialization.includes(spec.id)
+                  ? "bg-[#003365] text-white border-[#003365] shadow-sm"
+                  : "bg-white text-gray-700 border-gray-200 hover:border-[#003365] hover:text-[#003365] hover:bg-gray-50"
+              }`}
+            >
+              <span className="truncate max-w-[120px] sm:max-w-none">{spec.categoryName}</span>
+              {specialization.includes(spec.id) && easterEggActive && <span className="ml-1">{getRandomEmoji()}</span>}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -506,29 +462,15 @@ const CreatePost = ({
             >
               <ImagePlus
                 className={`h-6 w-6 sm:h-8 sm:w-8 transition-colors ${
-                  easterEggActive
-                    ? "text-purple-500"
-                    : "text-gray-400 group-hover:text-[#003365]"
+                  easterEggActive ? "text-purple-500" : "text-gray-400 group-hover:text-[#003365]"
                 }`}
               />
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">
-                Зураг нэмэх
-              </span>
+              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">Зураг нэмэх</span>
             </Label>
-            <Input
-              type="file"
-              accept="image/*"
-              hidden
-              ref={imageInputRef}
-              onChange={(e) => handleFileUpload(e, "image")}
-            />
+            <Input type="file" accept="image/*" hidden ref={imageInputRef} onChange={(e) => handleFileUpload(e, "image")} />
             {image && (
               <div className="relative mt-3">
-                <img
-                  src={image}
-                  alt="preview"
-                  className="max-h-20 rounded-lg shadow-sm"
-                />
+                <img src={image} alt="preview" className="max-h-20 rounded-lg shadow-sm" />
                 <Button
                   type="button"
                   size="sm"
@@ -556,29 +498,15 @@ const CreatePost = ({
             >
               <FileVideo
                 className={`h-6 w-6 sm:h-8 sm:w-8 transition-colors ${
-                  easterEggActive
-                    ? "text-purple-500"
-                    : "text-gray-400 group-hover:text-[#003365]"
+                  easterEggActive ? "text-purple-500" : "text-gray-400 group-hover:text-[#003365]"
                 }`}
               />
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">
-                Видео нэмэх
-              </span>
+              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">Видео нэмэх</span>
             </Label>
-            <Input
-              type="file"
-              accept="video/*"
-              hidden
-              ref={videoInputRef}
-              onChange={(e) => handleFileUpload(e, "video")}
-            />
+            <Input type="file" accept="video/*" hidden ref={videoInputRef} onChange={(e) => handleFileUpload(e, "video")} />
             {video && (
               <div className="relative mt-3">
-                <video
-                  src={video}
-                  controls
-                  className="max-h-20 rounded-lg shadow-sm"
-                />
+                <video src={video} controls className="max-h-20 rounded-lg shadow-sm" />
                 <Button
                   type="button"
                   size="sm"
@@ -606,29 +534,15 @@ const CreatePost = ({
             >
               <Volume2
                 className={`h-6 w-6 sm:h-8 sm:w-8 transition-colors ${
-                  easterEggActive
-                    ? "text-purple-500"
-                    : "text-gray-400 group-hover:text-[#003365]"
+                  easterEggActive ? "text-purple-500" : "text-gray-400 group-hover:text-[#003365]"
                 }`}
               />
-              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">
-                Аудио нэмэх
-              </span>
+              <span className="text-xs sm:text-sm font-medium text-gray-600 text-center">Аудио нэмэх</span>
             </Label>
-            <Input
-              type="file"
-              accept="audio/*"
-              hidden
-              ref={audioInputRef}
-              onChange={(e) => handleFileUpload(e, "audio")}
-            />
+            <Input type="file" accept="audio/*" hidden ref={audioInputRef} onChange={(e) => handleFileUpload(e, "audio")} />
             {audio && (
               <div className="relative mt-3 w-full">
-                <audio
-                  src={audio}
-                  controls
-                  className="w-full max-w-[100px] rounded-lg"
-                />
+                <audio src={audio} controls className="w-full max-w-[100px] rounded-lg" />
                 <Button
                   type="button"
                   size="sm"
@@ -655,15 +569,10 @@ const CreatePost = ({
               title: title.trim(),
               postContent: postContent.trim(),
             });
-            console.log(
-              "🔍 Button disabled:",
-              loading || uploading || !title.trim() || !postContent.trim()
-            );
+            console.log("🔍 Button disabled:", loading || uploading || !title.trim() || !postContent.trim());
             handleSubmit();
           }}
-          disabled={
-            loading || uploading || !title.trim() || !postContent.trim()
-          }
+          disabled={loading || uploading || !title.trim() || !postContent.trim()}
           className={`w-full h-10 sm:h-12 text-sm sm:text-base font-semibold transition-all duration-200 rounded-lg ${
             easterEggActive
               ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl"
@@ -674,23 +583,13 @@ const CreatePost = ({
             <>
               <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
               <span className="text-xs sm:text-sm">
-                {easterEggActive
-                  ? "Deploying awesome content..."
-                  : uploading
-                  ? "Файл илгээж байна..."
-                  : "Илгээж байна..."}
+                {easterEggActive ? "Deploying awesome content..." : uploading ? "Файл илгээж байна..." : "Илгээж байна..."}
               </span>
             </>
           ) : (
             <>
-              {easterEggActive ? (
-                <Rocket className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              ) : (
-                <Send className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              )}
-              <span className="text-xs sm:text-sm">
-                {easterEggActive ? "Launch Post 🚀" : "Нийтлэл нийтлэх"}
-              </span>
+              {easterEggActive ? <Rocket className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> : <Send className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
+              <span className="text-xs sm:text-sm">{easterEggActive ? "Launch Post 🚀" : "Нийтлэл нийтлэх"}</span>
             </>
           )}
         </Button>
@@ -706,9 +605,7 @@ const CreatePost = ({
     <div className="max-w-3xl mx-auto p-4 sm:p-6">
       <Card
         className={`border border-gray-200 rounded-xl sm:rounded-2xl shadow-sm transition-all duration-300 ${
-          easterEggActive
-            ? "ring-2 ring-purple-200 shadow-purple-100"
-            : "hover:shadow-lg"
+          easterEggActive ? "ring-2 ring-purple-200 shadow-purple-100" : "hover:shadow-lg"
         }`}
       >
         <CardHeader className="pb-4 sm:pb-6 border-b border-gray-100">
@@ -717,12 +614,8 @@ const CreatePost = ({
             onClick={handleTitleClick}
           >
             <PenTool className="h-5 w-5 sm:h-6 sm:w-6 text-[#003365]" />
-            <span className="text-sm sm:text-base md:text-lg lg:text-xl">
-              Шинэ нийтлэл үүсгэх
-            </span>
-            {easterEggActive && (
-              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 animate-pulse" />
-            )}
+            <span className="text-sm sm:text-base md:text-lg lg:text-xl">Шинэ нийтлэл үүсгэх</span>
+            {easterEggActive && <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 animate-pulse" />}
           </CardTitle>
           <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
             {easterEggActive ? "🎮 Developer mode activated! " : ""}

@@ -1,64 +1,85 @@
-"use client";
-
-import React, { useEffect } from "react";
+import React from "react";
 import { useUser } from "@clerk/nextjs";
-import { MessageBubble } from "./MessageBubble";
-import { Message } from "@/app/chatroom/types/chat";
-import { useSocket } from "@/context/SocketContext";
+import MessageBubble from "./MessageBubble";
 
 interface MessageListProps {
-  messages: Message[];
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  messages: Array<{
+    id: string;
+    chatRoomId: string;
+    userId: string;
+    type: "TEXT" | "IMAGE" | "FILE";
+    content: string;
+    createdAt: string;
+  }>;
+  setMessages: React.Dispatch<
+    React.SetStateAction<
+      Array<{
+        id: string;
+        chatRoomId: string;
+        userId: string;
+        type: "TEXT" | "IMAGE" | "FILE";
+        content: string;
+        createdAt: string;
+      }>
+    >
+  >;
   currentUserId?: string;
+  isLoading?: boolean;
   otherUserAvatar?: string;
 }
 
-export const MessageList: React.FC<MessageListProps> = ({
-  messages,
-  setMessages,
-  currentUserId,
-  otherUserAvatar,
-}) => {
-  const { user, isLoaded } = useUser();
-  const { socket } = useSocket();
+const MessageList: React.FC<MessageListProps> = React.memo(
+  ({
+    messages,
+    setMessages,
+    currentUserId,
+    isLoading = false,
+    otherUserAvatar,
+  }) => {
+    const { user, isLoaded } = useUser();
 
-  useEffect(() => {
-    if (!socket) return;
+    if (!isLoaded) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">Loading user...</div>
+        </div>
+      );
+    }
 
-    const handleNewMessage = (newMessage: Message) => {
-      setMessages((prev) => [...prev, newMessage]);
-    };
+    if (isLoading && messages.length === 0) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">Loading messages...</div>
+        </div>
+      );
+    }
 
-    socket.on("chat-message", handleNewMessage);
+    if (messages.length === 0) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">No messages yet</div>
+        </div>
+      );
+    }
 
-    return () => {
-      socket.off("chat-message", handleNewMessage);
-    };
-  }, [socket, setMessages]);
-
-  if (!isLoaded) {
     return (
-      <div className="p-4 text-center text-sm text-slate-500">
-        Loading messages...
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {messages
-        .filter((msg) => msg && msg.userId)
-        .map((msg, index) => {
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((msg, index) => {
           const isOwnMessage = msg.userId === (currentUserId || user?.id);
           return (
             <MessageBubble
-              key={`${msg.userId}-${msg.type}-${msg.content}-${index}`}
+              key={`${msg.id}-${index}`}
               message={msg}
               isOwnMessage={isOwnMessage}
               otherUserAvatar={otherUserAvatar}
             />
           );
         })}
-    </>
-  );
-};
+      </div>
+    );
+  }
+);
+
+MessageList.displayName = "MessageList";
+
+export default MessageList;

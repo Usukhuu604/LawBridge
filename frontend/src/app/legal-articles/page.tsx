@@ -318,7 +318,7 @@ const ArticlesPage = () => {
                             post.author?.profilePicture
                           );
                           const profilePicUrl = post.author?.profilePicture
-                            ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${post.author.profilePicture}`
+                            ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${post.author.profilePicture}`.trim()
                             : null;
                           console.log(
                             "🔗 Full profile picture URL:",
@@ -328,7 +328,7 @@ const ArticlesPage = () => {
                         })()}
                         {post.author?.profilePicture ? (
                           <img
-                            src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${post.author.profilePicture}`}
+                            src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${post.author.profilePicture}`.trim()}
                             alt={`${post.author?.firstName || ""} ${
                               post.author?.lastName || ""
                             }`}

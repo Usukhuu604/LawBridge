@@ -63,7 +63,7 @@ export default function useLawBridgeChat() {
   const { data, loading, error, refetch } = useQuery(GET_CHAT_HISTORY_BY_USER, {
     variables: { userId: user?.id || "" },
     skip: !user?.id,
-    fetchPolicy: "cache-first", // Use cache-first to prevent unnecessary refetches
+    fetchPolicy: "cache-first", // Changed from cache-and-network to prevent excessive refetches
   });
 
   useEffect(() => {

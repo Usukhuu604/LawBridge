@@ -12,6 +12,7 @@ import CustomUserButton from "./CustomUserButton";
 const navLinks = [
   { label: "Өмгөөлөгчид", href: "/find-lawyers" },
   { label: "Нийтлэл унших", href: "/legal-articles" },
+  { label: "Уулзалтууд", href: "/appointments" },
 ];
 
 export default function Header() {
@@ -32,10 +33,7 @@ export default function Header() {
   return (
     <header className="w-full bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-4 py-4 flex items-center justify-between relative">
-        <Link
-          href="/"
-          className="text-2xl text-[#003366] font-extrabold font-playfair-display"
-        >
+        <Link href="/" className="text-xl font-bold text-[#003366]">
           LawBridge
         </Link>
 
@@ -44,7 +42,7 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-gray-600 text-xl hover:text-[#003366] transition"
+              className="text-gray-600 hover:text-[#003365] transition"
             >
               {link.label}
             </Link>
@@ -84,17 +82,13 @@ export default function Header() {
             </SignedIn>
           </div>
 
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden text-gray-600">
             {isOpen ? (
-              <button
-                className="text-gray-600 p-1"
-                onClick={() => setIsOpen(!isOpen)}
-                aria-label="Close menu"
-              >
+              <button onClick={() => setIsOpen(!isOpen)} className="p-2">
                 <X className="w-6 h-6" />
               </button>
             ) : (
-              <>
+              <div className="flex gap-2 justify-center items-center">
                 <SignedIn>
                   {role === "lawyer" ? (
                     <CustomUserButton
@@ -107,14 +101,10 @@ export default function Header() {
                   )}
                 </SignedIn>
 
-                <button
-                  className="text-gray-600 p-1"
-                  onClick={() => setIsOpen(!isOpen)}
-                  aria-label="Open menu"
-                >
+                <button onClick={() => setIsOpen(!isOpen)} className="p-2">
                   <Menu className="w-6 h-6" />
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -126,7 +116,7 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="block text-gray-700 hover:text-[#003366]"
+              className="block text-gray-700 hover:text-[#003365]"
               onClick={() => setIsOpen(false)}
             >
               {link.label}

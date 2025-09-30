@@ -14,6 +14,8 @@ const MainPage = () => {
       </main>
 
       <FooterPage />
+
+      
     </div>
   );
 };

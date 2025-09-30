@@ -73,3 +73,10 @@ export const GET_CHAT_ROOMS_QUERY = gql`
     }
   }
 `;
+
+// ✅ Delete All Messages Mutation
+export const DELETE_ALL_MESSAGES_MUTATION = gql`
+  mutation DeleteAllMessages($chatRoomId: ID!) {
+    deleteAllMessages(chatRoomId: $chatRoomId)
+  }
+`;

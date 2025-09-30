@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery, gql } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import ChatRoom from "@/components/chat/ChatRoom";
 import { Input } from "@/components/ui/input";
@@ -20,99 +20,41 @@ import {
 import { debounce } from "lodash";
 import ChatroomHeader from "@/components/chat/ChatroomHeader";
 import ChatListItem from "@/components/chat/ChatListItem";
+import { SocketProvider } from "@/context/SocketContext";
+import { useGetChatRoomByUserQuery, useGetLawyerByIdQuery } from "@/generated";
+import { useDeleteAllMessages } from "@/hooks/useDeleteAllMessages";
 
-const GET_CHAT_ROOMS = gql`
-  query GetChatRoomByUser($userId: String!) {
-    getChatRoomByUser(userId: $userId) {
-      _id
-      participants
-      appointmentId
-      allowedMedia
-      lastMessage {
-        chatRoomId
-        ChatRoomsMessages {
-          _id
-          userId
-          type
-          content
-          createdAt
-        }
-      }
-    }
-  }
-`;
+// Using generated queries from @/generated
 
-const GET_LAWYER_BY_ID = gql`
-  query GetLawyerById($lawyerId: ID!) {
-    getLawyerById(lawyerId: $lawyerId) {
-      _id
-      lawyerId
-      clerkUserId
-      clientId
-      firstName
-      lastName
-      email
-      licenseNumber
-      bio
-      university
-      specialization {
-        _id
-        lawyerId
-        specializationId
-        categoryName
-        subscription
-        pricePerHour
-      }
-      achievements {
-        _id
-        title
-        description
-        threshold
-        icon
-      }
-      status
-      document
-      rating
-      profilePicture
-      createdAt
-      updatedAt
-    }
-  }
-`;
+// Using generated types from @/generated
+import type { GetChatRoomByUserQuery, GetLawyerByIdQuery } from "@/generated";
 
-interface LastMessage {
-  content: string;
-  timestamp: string;
-  senderId: string;
-}
-
-interface ChatRoom {
-  _id: string;
-  participants: string[];
-  appointmentId: string;
-  allowedMedia: string;
-  lastMessage?: LastMessage;
-  unreadCount?: number;
-}
+type ChatRoom = GetChatRoomByUserQuery["getChatRoomByUser"][0];
 
 // Custom hook for responsive design
 const useResponsive = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const updateSize = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
-    };
+    setIsClient(true);
 
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+    // Only access window on client side
+    if (typeof window !== "undefined") {
+      const updateSize = () => {
+        const width = window.innerWidth;
+        setIsMobile(width < 768);
+        setIsTablet(width >= 768 && width < 1024);
+      };
+
+      updateSize();
+      window.addEventListener("resize", updateSize);
+      return () => window.removeEventListener("resize", updateSize);
+    }
   }, []);
 
-  return { isMobile, isTablet };
+  return { isMobile, isTablet, isClient };
 };
 
 // Custom hook for network status
@@ -122,23 +64,27 @@ const useNetworkStatus = () => {
 
   useEffect(() => {
     setIsClient(true);
-    setIsOnline(navigator.onLine);
 
-    const updateOnlineStatus = () => setIsOnline(navigator.onLine);
+    // Only access navigator on client side
+    if (typeof window !== "undefined") {
+      setIsOnline(navigator.onLine);
 
-    window.addEventListener("online", updateOnlineStatus);
-    window.addEventListener("offline", updateOnlineStatus);
+      const updateOnlineStatus = () => setIsOnline(navigator.onLine);
 
-    return () => {
-      window.removeEventListener("online", updateOnlineStatus);
-      window.removeEventListener("offline", updateOnlineStatus);
-    };
+      window.addEventListener("online", updateOnlineStatus);
+      window.addEventListener("offline", updateOnlineStatus);
+
+      return () => {
+        window.removeEventListener("online", updateOnlineStatus);
+        window.removeEventListener("offline", updateOnlineStatus);
+      };
+    }
   }, []);
 
   return { isOnline, isClient };
 };
 
-export default function MessengerLayout() {
+const MessengerLayoutContent = () => {
   const { user, isLoaded: userLoaded } = useUser();
   const userId = user?.id;
 
@@ -147,11 +93,16 @@ export default function MessengerLayout() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
-  const [showHeader] = useState(false); // Toggle for header visibility
+  const [showHeader] = useState(true); // Toggle for header visibility
+  const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { isMobile, isTablet } = useResponsive();
-  const { isOnline, isClient } = useNetworkStatus();
+  // Delete messages hook
+  const { deleteAllMessages, loading: isDeletingMessages } =
+    useDeleteAllMessages();
+
+  const { isMobile, isTablet, isClient: responsiveClient } = useResponsive();
+  const { isOnline, isClient: networkClient } = useNetworkStatus();
 
   // Debounced search query
   const debouncedSetSearch = useCallback(
@@ -180,8 +131,8 @@ export default function MessengerLayout() {
   }, [isMobile, showHeader]);
 
   // Enhanced query with error handling and retry logic
-  const { data, loading, error, refetch } = useQuery(GET_CHAT_ROOMS, {
-    variables: { userId },
+  const { data, loading, error, refetch } = useGetChatRoomByUserQuery({
+    variables: { userId: userId || "" },
     skip: !userId || !userLoaded,
     fetchPolicy: "cache-and-network",
     errorPolicy: "all",
@@ -205,8 +156,8 @@ export default function MessengerLayout() {
   );
 
   // Fetch lawyer info for the selected chat with error handling
-  const { data: selectedLawyerData } = useQuery(GET_LAWYER_BY_ID, {
-    variables: { lawyerId: selectedOtherId },
+  const { data: selectedLawyerData } = useGetLawyerByIdQuery({
+    variables: { lawyerId: selectedOtherId || "" },
     skip: !selectedOtherId,
     errorPolicy: "all",
   });
@@ -235,18 +186,14 @@ export default function MessengerLayout() {
   const chatRooms: ChatRoom[] = useMemo(() => {
     const rooms = data?.getChatRoomByUser || [];
 
-    // Sort by last message timestamp and unread count
+    // Sort by last message timestamp
     return [...rooms].sort((a, b) => {
-      // Prioritize rooms with unread messages
-      if (a.unreadCount && !b.unreadCount) return -1;
-      if (!a.unreadCount && b.unreadCount) return 1;
-
-      // Then sort by last message timestamp
-      const aTime = a.lastMessage?.timestamp
-        ? new Date(a.lastMessage.timestamp).getTime()
+      // Sort by last message timestamp
+      const aTime = a.lastMessage?.ChatRoomsMessages?.[0]?.createdAt
+        ? new Date(a.lastMessage.ChatRoomsMessages[0].createdAt).getTime()
         : 0;
-      const bTime = b.lastMessage?.timestamp
-        ? new Date(b.lastMessage.timestamp).getTime()
+      const bTime = b.lastMessage?.ChatRoomsMessages?.[0]?.createdAt
+        ? new Date(b.lastMessage.ChatRoomsMessages[0].createdAt).getTime()
         : 0;
       return bTime - aTime;
     });
@@ -262,7 +209,8 @@ export default function MessengerLayout() {
       if (!otherId) return false;
 
       const profile = getProfile(otherId);
-      const lastMessage = room.lastMessage?.content?.toLowerCase() || "";
+      const lastMessage =
+        room.lastMessage?.ChatRoomsMessages?.[0]?.content?.toLowerCase() || "";
 
       return (
         profile.name.toLowerCase().includes(query) ||
@@ -301,8 +249,33 @@ export default function MessengerLayout() {
     searchInputRef.current?.focus();
   }, []);
 
+  const handleDeleteMessages = useCallback(
+    async (roomId: string) => {
+      try {
+        setDeletingRoomId(roomId);
+        await deleteAllMessages(roomId);
+
+        // If the deleted room was selected, clear the selection
+        if (selectedRoomId === roomId) {
+          setSelectedRoomId("");
+        }
+
+        // Show success message (you could add a toast notification here)
+        console.log("Messages deleted successfully");
+      } catch (error) {
+        console.error("Failed to delete messages:", error);
+        // Show error message (you could add a toast notification here)
+      } finally {
+        setDeletingRoomId(null);
+      }
+    },
+    [deleteAllMessages, selectedRoomId]
+  );
+
   // Keyboard shortcuts
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
@@ -334,19 +307,23 @@ export default function MessengerLayout() {
   const isInitialLoading = loading && !data;
   const isRefreshing = loading && !!data;
 
+  // Only render when client-side is ready
+  const isClient = responsiveClient && networkClient;
+
+  // Prevent hydration mismatch by not rendering until client-side is ready
+  if (!isClient) {
+    return (
+      <div className="h-screen w-screen bg-gray-50 text-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-screen bg-gray-50 text-gray-800 chatroom-container">
-      {/* Conditional Header */}
-      {showHeader && (
-        <ChatroomHeader
-          title="Чат"
-          subtitle={
-            selectedLawyerData?.getLawyerById
-              ? `${selectedLawyerData.getLawyerById.firstName} ${selectedLawyerData.getLawyerById.lastName}`
-              : "Харилцах хүнээ сонгоно уу"
-          }
-        />
-      )}
       {/* Network status indicator */}
       {isClient && !isOnline && (
         <div className="fixed top-0 left-0 right-0 bg-primary-custom text-white text-center py-2 text-sm z-50">
@@ -355,11 +332,7 @@ export default function MessengerLayout() {
         </div>
       )}
       {/* Main Content Container */}
-      <div
-        className={`${
-          showHeader ? "flex h-[calc(100vh-4rem)]" : "flex h-screen"
-        }`}
-      >
+      <div className="flex h-screen">
         {/* Sidebar */}
         <div
           className={`transform transition-transform duration-300 ease-in-out ${
@@ -501,7 +474,7 @@ export default function MessengerLayout() {
                       (id: string) => id !== userId
                     );
                     const selected = room._id === selectedRoomId;
-                    const hasUnread = (room.unreadCount || 0) > 0;
+                    const hasUnread = false; // unreadCount not available in generated type
 
                     return (
                       <ChatListItem
@@ -510,8 +483,12 @@ export default function MessengerLayout() {
                         otherId={otherId || ""}
                         selected={selected}
                         hasUnread={hasUnread}
-                        lastMessage={room.lastMessage?.content}
+                        lastMessage={
+                          room.lastMessage?.ChatRoomsMessages?.[0]?.content
+                        }
                         onSelect={handleSelectRoom}
+                        onDelete={handleDeleteMessages}
+                        isDeleting={deletingRoomId === room._id}
                       />
                     );
                   })}
@@ -525,9 +502,9 @@ export default function MessengerLayout() {
         {!sidebarOpen && (
           <Button
             onClick={toggleSidebar}
-            className={`fixed top-4 left-4 z-50 p-3 rounded-full shadow-lg bg-primary-custom hover:bg-primary-custom ${
+            className={`fixed left-4 z-50 p-3 rounded-full shadow-lg bg-primary-custom hover:bg-primary-custom ${
               isMobile ? "" : "hidden md:block"
-            }`}
+            } top-4`}
             size="sm"
             aria-label="Sidebar нээх (Ctrl+B)"
           >
@@ -552,7 +529,7 @@ export default function MessengerLayout() {
           {selectedRoomId ? (
             !sidebarOpen ? (
               <div className="flex-1 w-full chatroom-centered h-full">
-                <div className="max-w-4xl mx-auto px-4 h-full">
+                <div className="max-w-4xl mx-auto h-full">
                   <ChatRoom chatRoomId={selectedRoomId} />
                 </div>
               </div>
@@ -589,4 +566,14 @@ export default function MessengerLayout() {
       {/* Close main content container */}
     </div>
   );
-}
+};
+
+const MessengerLayout = () => {
+  return (
+    <SocketProvider>
+      <MessengerLayoutContent />
+    </SocketProvider>
+  );
+};
+
+export default MessengerLayout;

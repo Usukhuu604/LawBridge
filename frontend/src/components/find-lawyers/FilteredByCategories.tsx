@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import LawyerCard from "@/components/landing-page/LawyerCard";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectGroup,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
 import { useGetAdminSpecializationsQuery } from "@/generated";
 import { useQuery } from "@apollo/client";
 import { GET_ALL_LAWYERS } from "@/graphql/lawyer";
@@ -35,24 +43,18 @@ interface Lawyer {
 
 const FilteredByCategories = () => {
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  // const [showSelectedFilters, setShowSelectedFilters] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data } = useGetAdminSpecializationsQuery();
 
-  const {
-    data: allLawyersData,
-    loading: allLawyersLoading,
-    error: allLawyersError,
-  } = useQuery(GET_ALL_LAWYERS);
+  const { data: allLawyersData, loading: allLawyersLoading, error: allLawyersError } = useQuery(GET_ALL_LAWYERS);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowFilterDropdown(false);
       }
     };
@@ -77,9 +79,7 @@ const FilteredByCategories = () => {
     if (selectedSpecialties.length === 0) return true;
 
     if (Array.isArray(lawyer.specialization)) {
-      return lawyer.specialization.some((spec) =>
-        selectedSpecialties.includes(spec.specializationId)
-      );
+      return lawyer.specialization.some((spec) => selectedSpecialties.includes(spec.specializationId));
     }
 
     return false;
@@ -124,27 +124,16 @@ const FilteredByCategories = () => {
           {/* Filters */}
           <div className="w-full mb-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
-              <span className="text-slate-800 font-bold text-sm sm:text-base whitespace-nowrap tracking-wide">
-                Шүүлтүүр:
-              </span>
-              <div
-                className="relative flex-1 w-full sm:max-w-2xl z-20"
-                ref={dropdownRef}
-              >
+              <span className="text-slate-800 font-bold text-sm sm:text-base whitespace-nowrap tracking-wide">Шүүлтүүр:</span>
+              <div className="relative flex-1 w-full sm:max-w-2xl z-20" ref={dropdownRef}>
                 <button
                   onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                   className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-white to-gray-50 border border-gray-300 rounded-xl hover:from-gray-50 hover:to-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-md"
                 >
                   <span className="text-sm text-gray-700">
-                    {selectedSpecialties.length > 0
-                      ? `${selectedSpecialties.length} ангилал сонгогдсон`
-                      : "Ангилал сонгох"}
+                    {selectedSpecialties.length > 0 ? `${selectedSpecialties.length} ангилал сонгогдсон` : "Ангилал сонгох"}
                   </span>
-                  {showFilterDropdown ? (
-                    <ChevronUp className="w-4 h-4 text-gray-500" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
-                  )}
+                  {showFilterDropdown ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
                 </button>
 
                 {/* Dropdown Menu */}
@@ -155,12 +144,7 @@ const FilteredByCategories = () => {
                       <div className="mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-100">
                         <div className="flex items-center space-x-3 mb-2 sm:mb-3">
                           <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-4 h-4 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -169,13 +153,9 @@ const FilteredByCategories = () => {
                               />
                             </svg>
                           </div>
-                          <h3 className="text-lg sm:text-xl font-bold text-slate-800">
-                            Ангилал сонгох
-                          </h3>
+                          <h3 className="text-lg sm:text-xl font-bold text-slate-800">Ангилал сонгох</h3>
                         </div>
-                        <p className="text-sm sm:text-base text-gray-600 ml-11">
-                          Өөрт тохирох хуульчдын мэргэшлийн чиглэлийг сонгоно уу
-                        </p>
+                        <p className="text-sm sm:text-base text-gray-600 ml-11">Өөрт тохирох хуульчдын мэргэшлийн чиглэлийг сонгоно уу</p>
                       </div>
                       {/* Selected Filters Summary - Inside Dropdown */}
                       {selectedSpecialties.length > 0 && (
@@ -183,23 +163,11 @@ const FilteredByCategories = () => {
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
                               <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 13l4 4L19 7"
-                                  />
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               </div>
-                              <span className="text-base font-bold text-blue-800">
-                                Сонгосон шүүлтүүр ({selectedSpecialties.length})
-                              </span>
+                              <span className="text-base font-bold text-blue-800">Сонгосон шүүлтүүр ({selectedSpecialties.length})</span>
                             </div>
                             <button
                               onClick={clearAllFilters}
@@ -213,9 +181,7 @@ const FilteredByCategories = () => {
                           {/* Selected Filter Tags */}
                           <div className="flex flex-wrap gap-3">
                             {selectedSpecialties.map((specialtyId) => {
-                              const specialty = specializations.find(
-                                (s) => s.id === specialtyId
-                              );
+                              const specialty = specializations.find((s) => s.id === specialtyId);
                               return (
                                 <div
                                   key={specialtyId}
@@ -224,9 +190,7 @@ const FilteredByCategories = () => {
                                   <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
                                   <span>{specialty?.categoryName}</span>
                                   <button
-                                    onClick={() =>
-                                      handleSpecialtyToggle(specialtyId)
-                                    }
+                                    onClick={() => handleSpecialtyToggle(specialtyId)}
                                     className="ml-2 text-blue-400 hover:text-blue-600 hover:bg-blue-100 p-0.5 rounded-full transition-all duration-200 group-hover:bg-blue-200"
                                   >
                                     <X className="w-3 h-3" />
@@ -243,12 +207,7 @@ const FilteredByCategories = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div className="w-6 h-6 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -274,12 +233,8 @@ const FilteredByCategories = () => {
                               <div className="relative flex-shrink-0">
                                 <input
                                   type="checkbox"
-                                  checked={selectedSpecialties.includes(
-                                    spec.id
-                                  )}
-                                  onChange={() =>
-                                    handleSpecialtyToggle(spec.id)
-                                  }
+                                  checked={selectedSpecialties.includes(spec.id)}
+                                  onChange={() => handleSpecialtyToggle(spec.id)}
                                   className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all duration-200 accent-blue-600 hover:scale-105"
                                 />
                               </div>
@@ -307,11 +262,9 @@ const FilteredByCategories = () => {
                 key={lawyer.lawyerId || index}
                 name={`${lawyer.firstName} ${lawyer.lastName}`}
                 avatarImage={lawyer.profilePicture}
-                status={
-                  lawyer.status === "VERIFIED"
-                    ? "Баталгаажсан"
-                    : "Хүлээгдэж буй"
-                }
+                status={lawyer.status === "VERIFIED" ? "Баталгаажсан" : "Хүлээгдэж буй"}
+                rating={lawyer.rating}
+                reviewCount={lawyer.reviewCount}
               />
             ))
           ) : (
@@ -320,12 +273,8 @@ const FilteredByCategories = () => {
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
                   <Verified className="w-8 h-8 text-gray-400" />
                 </div>
-                <p className="text-gray-600 text-lg font-semibold mb-2">
-                  Таны хайлтын нөхцөлд тохирох хуульч олдсонгүй
-                </p>
-                <p className="text-gray-500">
-                  Шүүлтүүрүүдийг өөрчилж, хайлтын үгүүдийг өөрчилж үзээрэй.
-                </p>
+                <p className="text-gray-600 text-lg font-semibold mb-2">Таны хайлтын нөхцөлд тохирох хуульч олдсонгүй</p>
+                <p className="text-gray-500">Шүүлтүүрүүдийг өөрчилж, хайлтын үгүүдийг өөрчилж үзээрэй.</p>
               </div>
             </div>
           )}

@@ -145,13 +145,10 @@ export const GET_ALL_LAWYERS = gql`
 export const GET_LAWYERS_BY_IDS = gql`
   query GetLawyersByIds($ids: [ID!]!) {
     getLawyersByIds(ids: $ids) {
-      _id
       lawyerId
-      clerkUserId
       firstName
       lastName
       profilePicture
-      isOnline
     }
   }
 `;

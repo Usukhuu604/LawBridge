@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         {
-          error: "File type not supported. Please upload images, videos, or audio files.",
+          error:
+            "File type not supported. Please upload images, videos, or audio files.",
         },
         { status: 400 }
       );
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
     const timestamp = Date.now();
     const randomId = crypto.randomUUID();
     const fileExtension = file.name.split(".").pop();
-    const key = `posts/${timestamp}_${randomId}.${fileExtension}`;
+    const key = `chat/${timestamp}_${randomId}.${fileExtension}`;
 
     await r2.send(
       new PutObjectCommand({
@@ -78,11 +79,17 @@ export async function POST(req: NextRequest) {
     );
 
     // Ensure the public domain doesn't already have a protocol
-    const domain = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN!.replace(/^https?:\/\//, "");
+    const domain = process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN!.replace(
+      /^https?:\/\//,
+      ""
+    );
     const publicUrl = `https://${domain}/${key}`;
 
     console.log("🔗 Generated URL:", publicUrl);
-    console.log("🔗 Original NEXT_PUBLIC_R2_PUBLIC_DOMAIN:", process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN);
+    console.log(
+      "🔗 Original NEXT_PUBLIC_R2_PUBLIC_DOMAIN:",
+      process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN
+    );
     console.log("🔗 Cleaned domain:", domain);
 
     return NextResponse.json({
@@ -94,7 +101,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to upload file" },
+      { status: 500 }
+    );
   }
 }
 

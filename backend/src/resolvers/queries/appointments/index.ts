@@ -1,3 +1,4 @@
 // export * from "./get-appointment-by-id"
-export * from "./get-appointments-by-lawyer"
-export * from "./get-appointments"
+export * from "./get-appointments-by-lawyer";
+export * from "./get-appointments-by-user";
+export * from "./get-appointments";

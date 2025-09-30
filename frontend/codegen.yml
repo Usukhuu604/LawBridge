@@ -1,7 +1,7 @@
 overwrite: true
 schema:
-
-  - "https://lawbridge-server.onrender.com/graphql"
+  # - "https://lawbridge-server.onrender.com/graphql"
+  - "http://localhost:4000/graphql"
 
 documents:
   - "./src/**/*.graphql"
@@ -17,4 +17,3 @@ generates:
       - "typescript"
       - "typescript-operations"
       - "typescript-react-apollo"
-      

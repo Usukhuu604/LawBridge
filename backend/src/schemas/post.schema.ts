@@ -62,6 +62,7 @@ export const postTypeDefs = gql`
     title: String!
     content: PostContentInput!
     specialization: [ID!]!
+    lawyerId: ID
   }
 
   input UpdatePostInput {

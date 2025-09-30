@@ -19,6 +19,8 @@ export default function LawBridgeChat() {
     inputMessage,
     setInputMessage,
     isLoading,
+    isClearing,
+    clearChat,
     sendMessage,
     handleKeyPress,
     inputRef,
@@ -69,6 +71,8 @@ export default function LawBridgeChat() {
         connectionError={connectionError}
         messageCount={messages.length}
         isLoading={isLoading}
+        onClearChat={clearChat}
+        isClearing={isClearing}
       />
       <div className="flex-1 flex flex-col min-h-0">
         {showWelcome && messages.length === 0 ? (

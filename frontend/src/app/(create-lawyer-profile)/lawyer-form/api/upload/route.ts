@@ -22,9 +22,7 @@ export async function PUT(req: NextRequest) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const key = existingKey?.trim()
-    ? existingKey
-    : `uploads/${crypto.randomUUID()}_${file.name}`;
+  const key = existingKey?.trim() ? existingKey : `uploads/${crypto.randomUUID()}_${file.name}`;
 
   await r2.send(
     new PutObjectCommand({

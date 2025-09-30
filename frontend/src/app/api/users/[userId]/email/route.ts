@@ -7,7 +7,6 @@ export async function GET(
 ) {
   try {
     const { userId } = await params;
-    console.log("API Route: Fetching email for userId:", userId);
 
     if (!userId) {
       return NextResponse.json(
@@ -40,14 +39,7 @@ export async function GET(
     });
 
     // Get user data from Clerk
-    console.log("API Route: Calling clerkClient.users.getUser...");
     const user = await clerkClient.users.getUser(userId);
-    console.log("API Route: User data received:", {
-      id: user.id,
-      emailAddresses: user.emailAddresses?.map((e) => e.emailAddress),
-      firstName: user.firstName,
-      lastName: user.lastName,
-    });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

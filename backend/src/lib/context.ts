@@ -19,11 +19,12 @@ export const buildContext = async (req: Request): Promise<Context> => {
 
   if (token) {
     try {
-      // const { sub } = await verifyToken(token, {
-      //   secretKey: process.env.CLERK_SECRET_KEY!,
-      // });
+      // Verify the JWT token first
+      const { sub } = await verifyToken(token, {
+        secretKey: process.env.CLERK_SECRET_KEY!,
+      });
 
-      userId = token;
+      userId = sub;
       const user = await clerkClient.users.getUser(userId);
 
       role = user.publicMetadata?.role as string;
@@ -44,6 +45,8 @@ export const buildContext = async (req: Request): Promise<Context> => {
       }
     } catch (err) {
       console.error("❌ Token verification failed:", err);
+      // Don't throw error, just continue without authentication
+      console.log("⚠️ Continuing without authentication");
     }
   }
 

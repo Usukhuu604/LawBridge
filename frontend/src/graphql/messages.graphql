@@ -1,0 +1,103 @@
+mutation CreateMessage(
+  $chatRoomId: ID!
+  $userId: String!
+  $type: MediaType!
+  $content: String
+) {
+  createMessage(
+    chatRoomId: $chatRoomId
+    userId: $userId
+    type: $type
+    content: $content
+  ) {
+    chatRoomId
+    ChatRoomsMessages {
+      _id
+      userId
+      type
+      content
+      createdAt
+    }
+  }
+}
+
+mutation DeleteAllMessages($chatRoomId: ID!) {
+  deleteAllMessages(chatRoomId: $chatRoomId)
+}
+
+query GetMessages($chatRoomId: ID!) {
+  getMessages(chatRoomId: $chatRoomId) {
+    chatRoomId
+    ChatRoomsMessages {
+      _id
+      userId
+      type
+      content
+      createdAt
+    }
+  }
+}
+
+query GetChatRoomByUser($userId: String!) {
+  getChatRoomByUser(userId: $userId) {
+    _id
+    participants
+    appointmentId
+    allowedMedia
+    lastMessage {
+      chatRoomId
+      ChatRoomsMessages {
+        _id
+        userId
+        type
+        content
+        createdAt
+      }
+    }
+  }
+}
+
+query GetChatRoomById($id: String!) {
+  getChatRoomById(_id: $id) {
+    _id
+    participants
+    appointmentId
+    allowedMedia
+  }
+}
+
+query GetLawyerById($lawyerId: ID!) {
+  getLawyerById(lawyerId: $lawyerId) {
+    _id
+    lawyerId
+    clerkUserId
+    clientId
+    firstName
+    lastName
+    email
+    licenseNumber
+    bio
+    university
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    achievements {
+      _id
+      title
+      description
+      threshold
+      icon
+    }
+    status
+    document
+    rating
+    profilePicture
+    createdAt
+    updatedAt
+  }
+}

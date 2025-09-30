@@ -61,7 +61,12 @@ const NOTIFICATION_LABELS = {
 interface Notification {
   id: string;
   recipientId: string;
-  type: "LAWYER_APPROVED" | "APPOINTMENT_CREATED" | "APPOINTMENT_REMINDER" | "APPOINTMENT_STARTED" | "REVIEW_RECEIVED";
+  type:
+    | "LAWYER_APPROVED"
+    | "APPOINTMENT_CREATED"
+    | "APPOINTMENT_REMINDER"
+    | "APPOINTMENT_STARTED"
+    | "REVIEW_RECEIVED";
   content: string;
   read: boolean;
   createdAt: string;
@@ -71,7 +76,7 @@ export default function Notfication() {
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const { data, loading, error, refetch } = useQuery(GET_NOTIFICATIONS, {
     variables: { filter: showUnreadOnly ? { read: false } : {} },
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-first", // Changed from cache-and-network to prevent excessive refetches
   });
   const [markAsRead] = useMutation(MARK_AS_READ);
   const [markAllAsRead] = useMutation(MARK_ALL_AS_READ);
@@ -110,9 +115,16 @@ export default function Notfication() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="bg-white p-8 rounded-xl shadow-lg border border-red-200 max-w-md text-center">
           <Bell className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Error Loading Notifications</h2>
+          <h2 className="text-xl font-semibold text-red-700 mb-2">
+            Error Loading Notifications
+          </h2>
           <p className="text-red-600 mb-4">{error.message}</p>
-          <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700">Retry</Button>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -123,8 +135,13 @@ export default function Notfication() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-1">Notifications</h1>
-            <p className="text-slate-600 text-sm">You have {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}.</p>
+            <h1 className="text-3xl font-bold text-slate-800 mb-1">
+              Notifications
+            </h1>
+            <p className="text-slate-600 text-sm">
+              You have {unreadCount} unread notification
+              {unreadCount !== 1 ? "s" : ""}.
+            </p>
           </div>
           <div className="flex gap-2">
             <Button
@@ -132,7 +149,11 @@ export default function Notfication() {
               onClick={() => setShowUnreadOnly((v) => !v)}
               className="flex items-center gap-2"
             >
-              <Circle className={`h-4 w-4 ${showUnreadOnly ? "text-blue-600" : "text-slate-400"}`} />
+              <Circle
+                className={`h-4 w-4 ${
+                  showUnreadOnly ? "text-blue-600" : "text-slate-400"
+                }`}
+              />
               {showUnreadOnly ? "Show All" : "Show Unread"}
             </Button>
             <Button
@@ -151,24 +172,36 @@ export default function Notfication() {
           {notifications.length === 0 ? (
             <div className="bg-white rounded-xl p-8 shadow-lg border border-slate-200 text-center">
               <Bell className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold text-slate-700 mb-1">No Notifications</h3>
+              <h3 className="text-lg font-semibold text-slate-700 mb-1">
+                No Notifications
+              </h3>
               <p className="text-slate-500">You&apos;re all caught up!</p>
             </div>
           ) : (
             notifications.map((n: Notification) => (
               <div
                 key={n.id}
-                className={`flex items-start gap-4 bg-white rounded-xl shadow border border-slate-200 p-4 transition-all duration-200 ${n.read ? "opacity-70" : ""}`}
+                className={`flex items-start gap-4 bg-white rounded-xl shadow border border-slate-200 p-4 transition-all duration-200 ${
+                  n.read ? "opacity-70" : ""
+                }`}
               >
                 <div className="flex-shrink-0 mt-1">
-                  {NOTIFICATION_ICONS[n.type as keyof typeof NOTIFICATION_ICONS] || <Bell className="h-5 w-5 text-slate-400" />}
+                  {NOTIFICATION_ICONS[
+                    n.type as keyof typeof NOTIFICATION_ICONS
+                  ] || <Bell className="h-5 w-5 text-slate-400" />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-slate-800">
-                      {NOTIFICATION_LABELS[n.type as keyof typeof NOTIFICATION_LABELS] || n.type}
+                      {NOTIFICATION_LABELS[
+                        n.type as keyof typeof NOTIFICATION_LABELS
+                      ] || n.type}
                     </span>
-                    {!n.read && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">New</span>}
+                    {!n.read && (
+                      <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        New
+                      </span>
+                    )}
                   </div>
                   <div className="text-slate-700 text-sm mb-2">
                     {n.content.length > 120 && !expanded[n.id] ? (
@@ -218,4 +251,4 @@ export default function Notfication() {
       </div>
     </div>
   );
-} 
+}

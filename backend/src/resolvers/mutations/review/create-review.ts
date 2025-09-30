@@ -7,8 +7,17 @@ export const createReview: MutationResolvers["createReview"] = async (
   { clientId, lawyerId, input }, // Accept parameters directly
   context
 ) => {
+  if (!context.userId) {
+    throw new Error("User must be authenticated to create a review");
+  }
+
   if (!clientId) throw new Error("Client ID is required");
   if (!lawyerId) throw new Error("Lawyer ID is required");
+
+  // Validate that the clientId matches the authenticated user
+  if (clientId !== context.userId) {
+    throw new Error("You can only create reviews for yourself");
+  }
   const newReview = await Review.create({
     clientId,
     lawyerId: new Types.ObjectId(lawyerId),

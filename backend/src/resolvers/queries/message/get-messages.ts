@@ -6,6 +6,17 @@ export const getMessages: QueryResolvers["getMessages"] = async (
   { chatRoomId }
 ) => {
   const messages = await (Message as any).findOne({ chatRoomId });
+
+  // If no messages found, return empty array
+  if (!messages) {
+    return [
+      {
+        chatRoomId,
+        ChatRoomsMessages: [],
+      },
+    ];
+  }
+
   return [
     {
       chatRoomId,

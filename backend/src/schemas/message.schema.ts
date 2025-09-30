@@ -32,5 +32,6 @@ export const messageTypeDefs = gql`
       type: MediaType!
       content: String
     ): Message
+    deleteAllMessages(chatRoomId: ID!): Boolean
   }
 `;

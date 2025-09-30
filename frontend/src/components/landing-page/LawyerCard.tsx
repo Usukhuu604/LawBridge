@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GET_SPECIALIZATION_BY_LAWYER_ID } from "@/graphql/specializationsbylawyer";
@@ -12,9 +12,18 @@ type LawyerCardProps = {
   name: string;
   status: string;
   avatarImage?: string;
+  rating?: number;
+  reviewCount?: number;
 };
 
-const LawyerCard = ({ id, name, status, avatarImage }: LawyerCardProps) => {
+const LawyerCard = ({
+  id,
+  name,
+  status,
+  avatarImage,
+  rating,
+  reviewCount,
+}: LawyerCardProps) => {
   const [activeSpecialtyIndex, setActiveSpecialtyIndex] = useState<
     number | null
   >(null);
@@ -68,9 +77,11 @@ const LawyerCard = ({ id, name, status, avatarImage }: LawyerCardProps) => {
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden mr-4 flex-shrink-0 ring-3 ring-white/50 shadow-xl group-hover:ring-white/80 group-hover:shadow-2xl group-hover:scale-105 transition-all duration-500">
               {avatarImage ? (
                 <img
-                  src={
-                    process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN + "/" + avatarImage
-                  }
+                  src={(
+                    process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN +
+                    "/" +
+                    avatarImage
+                  ).trim()}
                   alt={name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />

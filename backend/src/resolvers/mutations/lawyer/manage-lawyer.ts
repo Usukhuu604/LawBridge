@@ -4,8 +4,7 @@ import { clerkClient } from "@clerk/clerk-sdk-node";
 import { GraphQLError } from "graphql";
 
 export const manageLawyerRequest: MutationResolvers["manageLawyerRequest"] =
-  async (_, { input }, ) => {
-
+  async (_, { input }, context) => {
     const { lawyerId, status } = input;
 
     // 2. Find the Lawyer Request

@@ -1,27 +1,19 @@
-mutation CreateAppointment($input: CreateAppointmentInput!) {
-  createAppointment(input: $input) {
+query GetAppointments {
+  getAppointments {
     id
     clientId
     lawyerId
     status
-    chatRoomId
-    subscription
+    specializationId
     slot {
       day
       startTime
       endTime
       booked
     }
-    specialization {
-      _id
-      lawyerId
-      specializationId
-      categoryName
-      subscription
-      pricePerHour
-    }
     notes
-    specializationId
+    createdAt
+    chatRoomId
   }
 }
 
@@ -57,6 +49,93 @@ query GetAppointmentsByLawyer($lawyerId: String!) {
 
 query GetAppointmentsByUser($clientId: String!) {
   getAppointmentsByUser(clientId: $clientId) {
+    id
+    clientId
+    lawyerId
+    status
+    chatRoomId
+    price
+    subscription
+    specializationId
+    slot {
+      day
+      startTime
+      endTime
+      booked
+    }
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    createdAt
+    endedAt
+    notes
+  }
+}
+
+query GetAppointmentById($getAppointmentByIdId: String!) {
+  getAppointmentById(id: $getAppointmentByIdId) {
+    id
+    clientId
+    lawyerId
+    status
+    chatRoomId
+    price
+    subscription
+    specializationId
+    slot {
+      day
+      startTime
+      endTime
+      booked
+    }
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    createdAt
+    endedAt
+    notes
+  }
+}
+
+mutation CreateAppointment($input: CreateAppointmentInput!) {
+  createAppointment(input: $input) {
+    id
+    clientId
+    lawyerId
+    status
+    chatRoomId
+    subscription
+    slot {
+      day
+      startTime
+      endTime
+      booked
+    }
+    specialization {
+      _id
+      lawyerId
+      specializationId
+      categoryName
+      subscription
+      pricePerHour
+    }
+    notes
+    specializationId
+  }
+}
+
+query GetAppointmentsByLawyer($lawyerId: String!) {
+  getAppointmentsByLawyer(lawyerId: $lawyerId) {
     id
     clientId
     lawyerId
