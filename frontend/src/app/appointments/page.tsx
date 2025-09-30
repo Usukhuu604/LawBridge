@@ -1,12 +1,12 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "@apollo/client";
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -25,31 +25,25 @@ import {
 import {
   Calendar,
   Clock,
-  MapPin,
   MessageCircle,
   Phone,
-  Mail,
-  Star,
   Shield,
-  Award,
-  GraduationCap,
-  FileText,
   DollarSign,
   Filter,
   Search,
   ChevronDown,
   ChevronUp,
-  Eye,
   Video,
   User,
   Building,
+  AlertCircle,
 } from "lucide-react";
 import {
   useGetAppointmentsByLawyerQuery,
   useGetAppointmentsByUserQuery,
 } from "@/generated";
 import { format } from "date-fns";
-import { enUS, mn } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import LawyerInfo from "@/components/appointments/LawyerInfo";
 
 // Status colors mapping
@@ -113,9 +107,9 @@ interface AppointmentWithDetails {
 
 const AppointmentsPage = () => {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<AppointmentWithDetails | null>(null);
+  const [selectedAppointment] = useState<AppointmentWithDetails | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [expandedAppointments, setExpandedAppointments] = useState<Set<string>>(
     new Set()
@@ -155,32 +149,18 @@ const AppointmentsPage = () => {
   const error = userRole === "lawyer" ? lawyerError : clientError;
   const refetch = userRole === "lawyer" ? refetchLawyer : refetchClient;
 
-  // Debug logging
-  console.log("=== APPOINTMENTS DEBUG ===");
-  console.log("User Role:", userRole);
-  console.log("User ID:", userId);
-  console.log("Is Loaded:", isLoaded);
-  console.log("User Object:", user);
-  console.log("User Public Metadata:", user?.publicMetadata);
-  console.log("Lawyer Appointments Data:", lawyerAppointmentsData);
-  console.log("Client Appointments Data:", clientAppointmentsData);
-  console.log("Appointments Data:", appointmentsData);
-  console.log("Loading:", loading);
-  console.log("Error:", error);
-  console.log("=========================");
-
   // Process appointments with basic details (lawyer details will be fetched individually)
   const appointmentsWithDetails: AppointmentWithDetails[] = useMemo(() => {
     const appointments =
       userRole === "lawyer"
-        ? appointmentsData?.getAppointmentsByLawyer
-        : appointmentsData?.getAppointmentsByUser;
+        ? (appointmentsData as any)?.getAppointmentsByLawyer
+        : (appointmentsData as any)?.getAppointmentsByUser;
 
     if (!appointments) return [];
 
     return appointments
-      .filter((appointment) => appointment && appointment.id) // Filter out null/undefined appointments
-      .map((appointment) => ({
+      .filter((appointment: any) => appointment && appointment.id) // Filter out null/undefined appointments
+      .map((appointment: any) => ({
         ...appointment,
         lawyer: null, // Will be populated when needed
       }));
@@ -243,9 +223,30 @@ const AppointmentsPage = () => {
     );
   };
 
+  // Handle chat navigation
+  const handleChatClick = (chatRoomId: string) => {
+    if (chatRoomId) {
+      router.push(`/chatroom?roomId=${chatRoomId}`);
+    }
+  };
+
+  // Handle video meeting
+  const handleVideoMeeting = () => {
+    // TODO: Implement video meeting functionality
+    // This could integrate with video calling service like Twilio, Zoom, etc.
+    alert("Video meeting functionality coming soon!");
+  };
+
+  // Handle phone call
+  const handlePhoneCall = () => {
+    // TODO: Implement phone call functionality
+    // This could integrate with calling service
+    alert("Phone call functionality coming soon!");
+  };
+
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -263,7 +264,7 @@ const AppointmentsPage = () => {
   // Show message if no user role is detected
   if (!user?.publicMetadata?.role) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 shadow-lg">
@@ -289,7 +290,7 @@ const AppointmentsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -306,7 +307,7 @@ const AppointmentsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="bg-red-50 border border-red-200 rounded-2xl p-8 shadow-lg">
@@ -336,7 +337,7 @@ const AppointmentsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -537,17 +538,7 @@ const AppointmentsPage = () => {
                         )}
                       </Button>
                       <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedAppointment(appointment)}
-                            className="border-[#003366]/20 text-[#003366] hover:bg-[#003366] hover:text-white transition-all duration-200"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Дэлгэрэнгүй
-                          </Button>
-                        </DialogTrigger>
+                        <DialogTrigger asChild></DialogTrigger>
                       </Dialog>
                     </div>
                   </div>
@@ -576,10 +567,10 @@ const AppointmentsPage = () => {
                               <p>
                                 <strong>Уулзалтын ID:</strong> {appointment.id}
                               </p>
-                              <p>
+                              <div>
                                 <strong>Статус:</strong>{" "}
                                 {getStatusBadge(appointment.status)}
-                              </p>
+                              </div>
                               <p>
                                 <strong>Огноо:</strong>{" "}
                                 {formatDate(appointment.slot?.day || "")}
@@ -648,6 +639,9 @@ const AppointmentsPage = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() =>
+                            handleChatClick(appointment.chatRoomId!)
+                          }
                           className="border-[#003366]/20 text-[#003366] hover:bg-[#003366] hover:text-white transition-all duration-200"
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
@@ -657,6 +651,7 @@ const AppointmentsPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={handleVideoMeeting}
                         className="border-[#003366]/20 text-[#003366] hover:bg-[#003366] hover:text-white transition-all duration-200"
                       >
                         <Video className="h-4 w-4 mr-2" />
@@ -665,6 +660,7 @@ const AppointmentsPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={handlePhoneCall}
                         className="border-[#003366]/20 text-[#003366] hover:bg-[#003366] hover:text-white transition-all duration-200"
                       >
                         <Phone className="h-4 w-4 mr-2" />
@@ -718,10 +714,10 @@ const AppointmentsPage = () => {
                       <p>
                         <strong>Уулзалтын ID:</strong> {selectedAppointment.id}
                       </p>
-                      <p>
+                      <div>
                         <strong>Статус:</strong>{" "}
                         {getStatusBadge(selectedAppointment.status)}
-                      </p>
+                      </div>
                       <p>
                         <strong>Огноо:</strong>{" "}
                         {formatDate(selectedAppointment.slot?.day || "")}
@@ -756,10 +752,10 @@ const AppointmentsPage = () => {
                         <strong>Өмгөөлөгчийн ID:</strong>{" "}
                         {selectedAppointment.lawyerId}
                       </p>
-                      <p>
+                      <div>
                         <strong>Статус:</strong>{" "}
                         {getStatusBadge(selectedAppointment.status)}
-                      </p>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <p>
@@ -814,7 +810,17 @@ const AppointmentsPage = () => {
                   >
                     Хаах
                   </Button>
-                  <Button className="px-6 py-2 bg-[#003366] hover:bg-[#002244] text-white">
+                  <Button
+                    onClick={() => {
+                      if (selectedAppointment?.chatRoomId) {
+                        handleChatClick(selectedAppointment.chatRoomId);
+                        setIsDetailOpen(false);
+                      } else {
+                        alert("No chat room available for this appointment");
+                      }
+                    }}
+                    className="px-6 py-2 bg-[#003366] hover:bg-[#002244] text-white"
+                  >
                     Чатлах
                   </Button>
                 </div>

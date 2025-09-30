@@ -8,11 +8,13 @@ export const getAppointmentById: QueryResolvers["getAppointmentById"] = async (
 ) => {
   // 1. Fetch the appointment by ID
   const appointment = await Appointment.findById(id).lean();
+  console.log('Fetched appointment:', appointment);
   if (!appointment) {
     return null;
   }
 
   // 2. Fetch and populate LawyerSpecialization and nested Specialization
+  console.log('Appointment.specializationId:', appointment.specializationId);
   let lawyerSpec = null;
   let nestedSpec = null;
   if (appointment.specializationId) {

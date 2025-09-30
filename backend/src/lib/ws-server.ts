@@ -18,4 +18,6 @@ export function startWsServer(httpServer: ReturnType<typeof createServer>) {
   });
 
   useServer({ schema }, wsServer);
+
+  console.log("🟢 GraphQL WebSocket server running on /graphql");
 }

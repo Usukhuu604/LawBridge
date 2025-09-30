@@ -52,8 +52,6 @@ const ArticlesPage = () => {
     setSearchTerm("");
   };
 
-  console.log(posts);
-
   // Clean URL function to fix double https issue
   const cleanUrl = (url: string) => {
     if (!url) return url;
@@ -311,21 +309,6 @@ const ArticlesPage = () => {
                       onClick={() => router.push(`/lawyer/${post.author?._id}`)}
                     >
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#003365] focus:ring-opacity-50 flex-shrink-0">
-                        {(() => {
-                          console.log("🔍 Post author data:", post.author);
-                          console.log(
-                            "🖼️ Profile picture URL:",
-                            post.author?.profilePicture
-                          );
-                          const profilePicUrl = post.author?.profilePicture
-                            ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${post.author.profilePicture}`.trim()
-                            : null;
-                          console.log(
-                            "🔗 Full profile picture URL:",
-                            profilePicUrl
-                          );
-                          return null;
-                        })()}
                         {post.author?.profilePicture ? (
                           <img
                             src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN}/${post.author.profilePicture}`.trim()}

@@ -1,6 +1,12 @@
 "use client";
 
-import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink, from } from "@apollo/client";
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloProvider,
+  createHttpLink,
+  from,
+} from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
 import { ReactNode, useMemo } from "react";
@@ -14,7 +20,9 @@ const httpLink = createHttpLink({
 const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) =>
-      console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`)
+      console.log(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+      )
     );
   }
   if (networkError) {
@@ -29,7 +37,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 });
 
 export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
-  const { getToken, isLoaded } = useAuth();
+  const { userId, getToken, isLoaded } = useAuth();
 
   // Create auth link that updates when userId changes
   const authLink = useMemo(
@@ -56,7 +64,7 @@ export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
           };
         }
       }),
-    [getToken]
+    [userId, getToken]
   );
 
   // Create client with proper dependencies to ensure it updates when auth changes
@@ -69,12 +77,12 @@ export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
             fields: {
               // Add field policies to prevent unnecessary refetches
               getLawyers: {
-                merge(_unused, incoming) {
+                merge(_, incoming) {
                   return incoming;
                 },
               },
               getChatRoomByUser: {
-                merge(_unused, incoming) {
+                merge(_, incoming) {
                   return incoming;
                 },
               },

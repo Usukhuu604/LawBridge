@@ -6,7 +6,7 @@ export async function fetchLiveKitToken(
 ): Promise<string> {
   console.log("[fetchLiveKitToken] Called with:", { chatRoomId, clerkToken });
   try {
-    const url = "http://localhost:4000/api/livekit-token";
+    const url = "https://lawbridge-server.onrender.com/api/livekit-token";
     console.log("[fetchLiveKitToken] Fetching:", url);
     console.log("[fetchLiveKitToken] Request headers:", {
       "Content-Type": "application/json",

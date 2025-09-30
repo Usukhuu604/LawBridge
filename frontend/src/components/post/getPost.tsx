@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import CreateComment from "@/components/comment/CreateComment";
-import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface PostType {
@@ -19,7 +18,8 @@ export const GetPost = () => {
     {
       id: 1,
       content: "Хэрэг шийдвэрлээд баяртай байна!",
-      mediaUrl: "https://www.totallylegal.com/getasset/c3ee2a89-b973-445f-9337-1ca05736c950/",
+      mediaUrl:
+        "https://www.totallylegal.com/getasset/c3ee2a89-b973-445f-9337-1ca05736c950/",
       mediaType: "image",
       comments: ["Сайн байна!", "Амжилт хүсье!"],
       createdAt: "2025-07-08",
@@ -43,18 +43,31 @@ export const GetPost = () => {
   return (
     <div className="space-y-5 flex flex-col items-center">
       {posts.map((post) => (
-        <Card key={post.id} className="bg-gray-300 border-none text-black shadow-lg md:w-180">
-          <CardHeader className="text-sm text-gray-200">{post.createdAt}</CardHeader>
+        <Card
+          key={post.id}
+          className="bg-gray-300 border-none text-black shadow-lg md:w-180"
+        >
+          <CardHeader className="text-sm text-gray-200">
+            {post.createdAt}
+          </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xl font-bold">“{post.content}”</p>
 
             {post.mediaType === "image" && post.mediaUrl && (
-              <Image src={post.mediaUrl} alt="post" width={600} height={400} className="rounded-md w-full max-h-96 object-cover" priority />
+              <img
+                src={post.mediaUrl}
+                alt="post"
+                className="rounded-md w-full max-h-96 object-cover"
+              />
             )}
 
             {post.mediaType === "video" && post.mediaUrl && (
               <div className="aspect-video">
-                <iframe src={post.mediaUrl} className="w-full h-full rounded-md" allowFullScreen />
+                <iframe
+                  src={post.mediaUrl}
+                  className="w-full h-full rounded-md"
+                  allowFullScreen
+                />
               </div>
             )}
 

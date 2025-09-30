@@ -13,7 +13,9 @@ import { useUser } from "@clerk/nextjs";
 import {
   useCreateSpecializationMutation,
   useGetAdminSpecializationsQuery,
+  useGetLawyerByIdQuery,
 } from "@/generated";
+import { Shield } from "lucide-react";
 
 type Props = {
   errors: FieldErrors<FormData>;
@@ -46,14 +48,24 @@ const ThirdCardForLawyer = ({
   const { data } = useGetAdminSpecializationsQuery();
   const specializations = data?.getAdminSpecializations || [];
 
-  useEffect(() => {
-    setRecommendPaid((prev) => {
-      const updated: { [key: string]: boolean } = {};
-      watchedSpecializations.forEach((id) => {
-        updated[id] = prev[id] ?? false;
-      });
-      return updated;
+  // Check if lawyer already exists
+  const { data: existingLawyer, loading: checkingLawyer } =
+    useGetLawyerByIdQuery({
+      variables: { lawyerId: user?.id || "" },
+      skip: !user?.id,
+      errorPolicy: "ignore", // Don't show error if lawyer doesn't exist
     });
+
+  useEffect(() => {
+    if (Array.isArray(watchedSpecializations)) {
+      setRecommendPaid((prev) => {
+        const updated: { [key: string]: boolean } = {};
+        watchedSpecializations.forEach((id) => {
+          updated[id] = prev[id] ?? false;
+        });
+        return updated;
+      });
+    }
   }, [watchedSpecializations]);
 
   const handleRegister = async () => {
@@ -64,6 +76,15 @@ const ThirdCardForLawyer = ({
     if (!lawyerId) {
       console.error("lawyerId олдсонгүй");
       return alert("Нэвтэрсэн хэрэглэгчийн ID олдсонгүй.");
+    }
+
+    // Check if user is already registered as a lawyer
+    if (existingLawyer?.getLawyerById) {
+      alert(
+        "Та аль хэдийн өмгөөлөгчөөр бүртгэгдсэн байна. Профайл хуудас руу шилжиж байна."
+      );
+      push("/my-profile/me");
+      return;
     }
 
     try {
@@ -82,43 +103,97 @@ const ThirdCardForLawyer = ({
           },
         },
       });
-      await Promise.all(
-        watchedSpecializations.map(async (specId) => {
-          const sub = recommendPaid[specId] ?? false;
+      // Only create specializations if there are any selected
+      if (
+        Array.isArray(watchedSpecializations) &&
+        watchedSpecializations.length > 0
+      ) {
+        try {
+          // Map string IDs to actual ObjectIds from the API
+          const specializationsToCreate = watchedSpecializations
+            .map((specId) => {
+              // Find the actual specialization object from the API response
+              const actualSpec = specializations.find(
+                (spec) => spec.id === specId
+              );
 
-          let price = 0;
+              if (!actualSpec) {
+                return null;
+              }
 
-          if (sub) {
-            const raw = hourlyRates[specId].split(" ")[1].replace(/'/g, "");
-            price = parseInt(raw, 10);
+              const sub = Boolean(recommendPaid[specId] ?? false);
+              let price = 0;
+
+              if (sub && hourlyRates[specId]) {
+                try {
+                  const raw = hourlyRates[specId]
+                    .split(" ")[1]
+                    ?.replace(/'/g, "");
+                  price = raw ? parseInt(raw, 10) : 0;
+                } catch {
+                  price = 0;
+                }
+              }
+
+              return {
+                lawyerId: lawyerId,
+                specializationId: actualSpec.id, // Use the actual ObjectId from API
+                subscription: sub,
+                pricePerHour: price,
+              };
+            })
+            .filter(Boolean); // Remove null entries
+
+          // Check if we have any valid specializations after mapping
+          if (specializationsToCreate.length === 0) {
+            return;
+          }
+
+          // Validate the data before sending
+          const validSpecializations = specializationsToCreate
+            .filter((spec) => spec !== null)
+            .map((spec) => ({
+              ...spec,
+              subscription: Boolean(spec.subscription),
+            }))
+            .filter(
+              (spec) =>
+                spec.lawyerId &&
+                spec.specializationId &&
+                typeof spec.subscription === "boolean" &&
+                typeof spec.pricePerHour === "number"
+            );
+
+          if (validSpecializations.length === 0) {
+            return;
           }
 
           await createSpecialization({
             variables: {
               input: {
-                specializations: [
-                  {
-                    lawyerId: lawyerId,
-                    specializationId: specId,
-                    subscription: sub,
-                    pricePerHour: price,
-                  },
-                ],
+                specializations: validSpecializations,
               },
             },
           });
-        })
-      );
+        } catch {
+          // Don't throw the error, just continue
+          // The lawyer profile was already created successfully
+        }
+      }
 
       push("/pending-approval");
-    } catch (error) {
-      console.error("Бүртгүүлэх үед алдаа гарлаа:", error);
-      alert("Алдаа гарлаа. Дахин оролдоно уу.");
+    } catch (error: any) {
+      // Handle specific GraphQL errors
+      if (error?.message && error.message.includes("already exists")) {
+        push("/my-profile/me"); // Redirect to profile page
+      }
     }
   };
 
   const handleCheckboxChange = (checked: boolean | string, value: string) => {
-    const current = watchedSpecializations || [];
+    const current = Array.isArray(watchedSpecializations)
+      ? watchedSpecializations
+      : [];
     if (checked) {
       setValue("specializations", [...current, value]);
     } else {
@@ -130,25 +205,50 @@ const ThirdCardForLawyer = ({
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
+      {/* Step Header */}
+      <div className="text-center">
+        <div className="w-16 h-16 bg-[#003366]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Shield className="w-8 h-8 text-[#003366]" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#003366] mb-2">
+          Тусгайлсан талбарууд
+        </h2>
+        <p className="text-gray-600">Ажиллах мэргэжлийн талбараа сонгоно уу</p>
+      </div>
+
       <div>
-        <label className="block font-medium mb-4 text-[16px]">
-          Ажиллах талбараа сонгоно уу
+        <label className="block font-semibold text-[#003366] mb-4 text-lg">
+          Ажиллах талбараа сонгоно уу *
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {specializations.map((spec) => (
-            <div key={spec.id} className="flex items-center space-x-2">
+            <div
+              key={spec.id}
+              className={`
+                flex items-center space-x-3 p-3 rounded-lg border-2 transition-all duration-200
+                ${
+                  Array.isArray(watchedSpecializations) &&
+                  watchedSpecializations.includes(spec.id)
+                    ? "border-[#003366] bg-[#003366]/5"
+                    : "border-gray-200 hover:border-[#003366]/50 hover:bg-[#003366]/5"
+                }
+              `}
+            >
               <Checkbox
                 id={`spec-${spec.id}`}
-                checked={watchedSpecializations.includes(spec.id)}
+                checked={
+                  Array.isArray(watchedSpecializations) &&
+                  watchedSpecializations.includes(spec.id)
+                }
                 onCheckedChange={(checked) =>
                   handleCheckboxChange(checked, spec.id)
                 }
-                className="cursor-pointer hover:bg-gray-100"
+                className="cursor-pointer data-[state=checked]:bg-[#003366] data-[state=checked]:border-[#003366]"
               />
               <label
                 htmlFor={`spec-${spec.id}`}
-                className="text-sm cursor-pointer"
+                className="text-sm cursor-pointer flex-1 font-medium"
               >
                 {spec.categoryName}
               </label>
@@ -180,8 +280,8 @@ const ThirdCardForLawyer = ({
                 key={specId}
                 className={`flex items-center p-3 border rounded-lg transition-colors ${
                   isChecked
-                    ? "bg-green-200 border-green-500"
-                    : "border-blue-300 hover:bg-gray-100"
+                    ? "bg-[#003366] border-[#003366] text-white"
+                    : "border-[#003366] hover:bg-gray-100"
                 }`}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).tagName !== "INPUT") {
@@ -237,10 +337,14 @@ const ThirdCardForLawyer = ({
         </Button>
         <Button
           onClick={handleRegister}
-          disabled={creatingLawyer}
-          className="bg-blue-500 text-white hover:bg-blue-400"
+          disabled={creatingLawyer || checkingLawyer}
+          className="bg-[#003366] text-white hover:bg-[#003366]/80"
         >
-          {creatingLawyer ? "Илгээж байна..." : "Бүртгүүлэх"}
+          {creatingLawyer
+            ? "Илгээж байна..."
+            : checkingLawyer
+            ? "Шалгаж байна..."
+            : "Бүртгүүлэх"}
         </Button>
       </div>
     </div>

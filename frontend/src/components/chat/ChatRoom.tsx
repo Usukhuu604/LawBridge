@@ -151,8 +151,6 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ chatRoomId }) => {
     handleJoinCall,
     handleLeaveCall,
     activeCallType,
-    isJoiningCall,
-    isCallConnected,
     liveKitToken,
   } = useChatRoomState(chatRoomId);
 

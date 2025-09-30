@@ -7,9 +7,7 @@ import {
   Video,
   Music,
   FileText,
-  AlertCircle,
 } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
 
 interface Message {
   id: string;
@@ -30,8 +28,6 @@ interface MessageBubbleProps {
 
 const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
   ({ message, isOwnMessage, otherUserAvatar }) => {
-    const { user } = useUser();
-
     const getFileIcon = (fileName: string) => {
       const extension = fileName.split(".").pop()?.toLowerCase();
       if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "")) {
@@ -223,5 +219,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
     );
   }
 );
+
+MessageBubble.displayName = "MessageBubble";
 
 export default MessageBubble;

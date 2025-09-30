@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useUser as useClerkUser, useAuth } from "@clerk/nextjs";
-import { useQuery, useMutation } from "@apollo/client";
 import { useSocket } from "@/context/SocketContext";
 import { fetchLiveKitToken } from "@/lib/livekit";
 import { User as ChatUser } from "@/app/chatroom/types/chat";
@@ -55,36 +54,7 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
   const { user, isLoaded: userLoaded } = useClerkUser();
   const { getToken } = useAuth();
 
-  // Don't proceed if user is not loaded yet (prevents hydration issues)
-  if (!userLoaded) {
-    return {
-      user: null,
-      messages: [],
-      setMessages: () => {},
-      typingUsers: {},
-      isSending: false,
-      isConnected: false,
-      isLoading: true,
-      error: null,
-      handleSendMessage: async () => {},
-      handleSendFile: async () => {},
-      handleTyping: () => {},
-      messagesEndRef: {
-        current: null,
-      } as unknown as React.RefObject<HTMLDivElement>,
-      otherUser: { id: "", name: "", avatar: "", isLawyer: false },
-      handleJoinCall: async () => {},
-      handleLeaveCall: () => {},
-      activeCallType: null,
-      isJoiningCall: false,
-      isCallConnected: false,
-      liveKitToken: null,
-      setIsCallConnected: () => {},
-      setIsJoiningCall: () => {},
-      handleDeleteAllMessages: async () => {},
-      isDeletingMessages: false,
-    };
-  }
+  // Always call hooks at the top level
   const {
     socket,
     isConnected,
@@ -121,13 +91,9 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load initial messages from GraphQL
-  const {
-    data: chatData,
-    loading: chatLoading,
-    refetch,
-  } = useGetMessagesQuery({
+  const {} = useGetMessagesQuery({
     variables: { chatRoomId: chatRoomId || "" },
-    skip: !chatRoomId,
+    skip: !chatRoomId || !userLoaded,
     fetchPolicy: "cache-and-network",
     onCompleted: (data) => {
       if (data?.getMessages?.[0]?.ChatRoomsMessages) {
@@ -156,7 +122,7 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
   // Get chat room info
   const { data: chatRoomData } = useGetChatRoomByIdQuery({
     variables: { id: chatRoomId || "" },
-    skip: !chatRoomId,
+    skip: !chatRoomId || !userLoaded,
   });
 
   // Find other participant
@@ -167,7 +133,7 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
   // Get lawyer info for other participant
   const { data: lawyerData } = useGetLawyerByIdQuery({
     variables: { lawyerId: otherParticipantId || "" },
-    skip: !otherParticipantId,
+    skip: !otherParticipantId || !userLoaded,
   });
 
   // Set other user info
@@ -186,18 +152,18 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
 
   // Join room when component mounts
   useEffect(() => {
-    if (socket && isConnected && chatRoomId) {
+    if (socket && isConnected && chatRoomId && userLoaded) {
       joinRoom(chatRoomId);
 
       return () => {
         // Cleanup handled by the main message listener
       };
     }
-  }, [socket, isConnected, chatRoomId, joinRoom]);
+  }, [socket, isConnected, chatRoomId, joinRoom, userLoaded]);
 
   // Real-time message handling
   useEffect(() => {
-    if (!socket || !onMessage || !offMessage) return;
+    if (!socket || !onMessage || !offMessage || !userLoaded) return;
 
     // Listen for new messages from other users
     const handleNewMessage = (message: any) => {
@@ -277,6 +243,7 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
     offMessage,
     onTyping,
     offTyping,
+    userLoaded,
   ]);
 
   // Auto-scroll to bottom when messages change
@@ -297,19 +264,11 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
   // Send message handler - Real-time approach
   const handleSendMessage = useCallback(
     async (content: string) => {
-      if (!user || !chatRoomId || isSending || !content.trim()) {
+      if (!user || !chatRoomId || isSending || !content.trim() || !userLoaded) {
         return;
       }
 
       setIsSending(true);
-
-      // Create message object
-      const message = {
-        userId: user.id,
-        content: content.trim(),
-        type: "TEXT" as const,
-        createdAt: new Date().toISOString(),
-      };
 
       // Add to UI immediately for instant feedback
       const immediateMessage: MessageType = {
@@ -343,13 +302,13 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
       setError(null);
       setIsSending(false);
     },
-    [user, chatRoomId, isSending, socketSendMessage]
+    [user, chatRoomId, isSending, socketSendMessage, userLoaded]
   );
 
   // File handler
   const handleSendFile = useCallback(
     async (file: File, fileUrl: string) => {
-      if (!user || !chatRoomId || isSending) {
+      if (!user || !chatRoomId || isSending || !userLoaded) {
         return;
       }
 
@@ -361,14 +320,6 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
         if (file.type.startsWith("image/")) {
           messageType = "IMAGE";
         }
-
-        // Create message object
-        const message = {
-          userId: user.id,
-          content: fileUrl, // Store the R2 URL
-          type: messageType,
-          createdAt: new Date().toISOString(),
-        };
 
         // Add to UI immediately for instant feedback
         const immediateMessage: MessageType = {
@@ -408,22 +359,22 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
         setIsSending(false);
       }
     },
-    [user, chatRoomId, isSending, socketSendMessage]
+    [user, chatRoomId, isSending, socketSendMessage, userLoaded]
   );
 
   // Typing handler
   const handleTyping = useCallback(
     (typing: boolean) => {
-      if (!user || !chatRoomId) return;
+      if (!user || !chatRoomId || !userLoaded) return;
       emitTyping({ chatRoomId, isTyping: typing });
     },
-    [user, chatRoomId, emitTyping]
+    [user, chatRoomId, emitTyping, userLoaded]
   );
 
   // Call handlers (placeholder)
   const handleJoinCall = useCallback(
     async (type: "video" | "audio") => {
-      if (!user || !chatRoomId || isJoiningCall) return;
+      if (!user || !chatRoomId || isJoiningCall || !userLoaded) return;
       setIsJoiningCall(true);
       try {
         const clerkToken = await getToken();
@@ -437,7 +388,7 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
         setError(error instanceof Error ? error.message : String(error));
       }
     },
-    [user, chatRoomId, getToken, isJoiningCall]
+    [user, chatRoomId, getToken, isJoiningCall, userLoaded]
   );
 
   const handleLeaveCall = useCallback(() => {
@@ -449,8 +400,8 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
 
   // Delete all messages handler
   const handleDeleteAllMessages = useCallback(async () => {
-    if (!chatRoomId) {
-      console.error("❌ No chat room ID provided");
+    if (!chatRoomId || !userLoaded) {
+      console.error("❌ No chat room ID provided or user not loaded");
       return;
     }
 
@@ -465,7 +416,38 @@ export default function useChatRoomState(chatRoomId: string): UseChatRoomState {
       console.error("❌ Failed to delete all messages:", error);
       setError("Failed to delete messages. Please try again.");
     }
-  }, [chatRoomId, deleteAllMessages]);
+  }, [chatRoomId, deleteAllMessages, userLoaded]);
+
+  // Don't proceed if user is not loaded yet (prevents hydration issues)
+  if (!userLoaded) {
+    return {
+      user: null,
+      messages: [],
+      setMessages: () => {},
+      typingUsers: {},
+      isSending: false,
+      isConnected: false,
+      isLoading: true,
+      error: null,
+      handleSendMessage: async () => {},
+      handleSendFile: async () => {},
+      handleTyping: () => {},
+      messagesEndRef: {
+        current: null,
+      } as unknown as React.RefObject<HTMLDivElement>,
+      otherUser: { id: "", name: "", avatar: "", isLawyer: false },
+      handleJoinCall: async () => {},
+      handleLeaveCall: () => {},
+      activeCallType: null,
+      isJoiningCall: false,
+      isCallConnected: false,
+      liveKitToken: null,
+      setIsCallConnected: () => {},
+      setIsJoiningCall: () => {},
+      handleDeleteAllMessages: async () => {},
+      isDeletingMessages: false,
+    };
+  }
 
   return {
     user: user

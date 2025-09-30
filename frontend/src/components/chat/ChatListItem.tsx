@@ -37,7 +37,6 @@ export default function ChatListItem({
   const userInfo = useUserInfo(otherId);
   const { user } = useUser();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
 
   // Fallback values
   const name = userInfo?.name || "Хэрэглэгч";
@@ -48,11 +47,7 @@ export default function ChatListItem({
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsClicked(true);
     setShowDeleteConfirm(true);
-
-    // Reset click state after animation
-    setTimeout(() => setIsClicked(false), 200);
   };
 
   const handleConfirmDelete = (e: React.MouseEvent) => {

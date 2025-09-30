@@ -3,48 +3,72 @@ import { LawyerSpecialization } from "@/models";
 import { MutationResolvers } from "@/types/generated";
 import { GraphQLError } from "graphql";
 
-export const createSpecialization: MutationResolvers["createSpecialization"] = async (_, { input }, context) => {
-  try {
-    const docs = input.specializations.map((s) => ({
-      lawyerId: context.lawyerId,
-      specializationId: s.specializationId,
-      subscription: s.subscription,
-      pricePerHour: s.subscription ? s.pricePerHour : 0, // If subscription is false, pricePerHour is 0
-    }));
+export const createSpecialization: MutationResolvers["createSpecialization"] =
+  async (_, { input }, context) => {
+    try {
+      // Validate input
+      if (!input?.specializations || input.specializations.length === 0) {
+        throw new GraphQLError("No specializations provided");
+      }
 
-    // Insert and populate
-    let created = await LawyerSpecialization.insertMany(docs);
+      const docs = input.specializations.map((s) => {
+        // Validate each specialization
+        if (!s.lawyerId || !s.specializationId) {
+          throw new GraphQLError(
+            "Missing required fields: lawyerId or specializationId"
+          );
+        }
 
-    let populated = (await LawyerSpecialization.populate(created as any, {
-      path: "specializationId",
-    })) as unknown as any[];
+        return {
+          lawyerId: s.lawyerId, // ✅ Use s.lawyerId from input
+          specializationId: s.specializationId,
+          subscription: s.subscription || false,
+          pricePerHour: s.subscription ? s.pricePerHour || 0 : 0,
+        };
+      });
 
-    return populated.map((spec) => {
-      // Always return specializationId as a string
-      const specId =
-        spec.specializationId && typeof spec.specializationId === "object" && "_id" in (spec.specializationId as any)
-          ? (spec.specializationId as any)._id.toString()
-          : spec.specializationId
-          ? spec.specializationId.toString()
-          : "";
+      console.log("Creating specializations with data:", docs);
 
-      // Get categoryName from populated specializationId
-      const categoryName =
-        spec.specializationId && typeof spec.specializationId === "object" && "categoryName" in (spec.specializationId as any)
-          ? (spec.specializationId as any).categoryName
-          : null;
+      // Insert and populate
+      let created = await LawyerSpecialization.insertMany(docs);
+      console.log("Created specializations:", created);
 
-      return {
-        _id: spec._id.toString(),
-        lawyerId: spec.lawyerId.toString(),
-        specializationId: specId,
-        categoryName: categoryName, // <-- This is only in the API response, not in the DB
-        subscription: spec.subscription,
-        pricePerHour: spec.subscription ? spec.pricePerHour : 0, // If subscription is false, pricePerHour is 0
-      };
-    });
-  } catch (error) {
-    console.error("❌ Error creating specializations:", error);
-    throw new GraphQLError("Failed to create specializations");
-  }
-};
+      let populated = (await LawyerSpecialization.populate(created as any, {
+        path: "specializationId",
+      })) as unknown as any[];
+
+      return populated.map((spec) => {
+        // Always return specializationId as a string
+        const specId =
+          spec.specializationId &&
+          typeof spec.specializationId === "object" &&
+          "_id" in (spec.specializationId as any)
+            ? (spec.specializationId as any)._id.toString()
+            : spec.specializationId
+            ? spec.specializationId.toString()
+            : "";
+
+        // Get categoryName from populated specializationId
+        const categoryName =
+          spec.specializationId &&
+          typeof spec.specializationId === "object" &&
+          "categoryName" in (spec.specializationId as any)
+            ? (spec.specializationId as any).categoryName
+            : null;
+
+        return {
+          _id: spec._id.toString(),
+          lawyerId: spec.lawyerId.toString(),
+          specializationId: specId,
+          categoryName: categoryName,
+          subscription: spec.subscription,
+          pricePerHour: spec.subscription ? spec.pricePerHour : 0,
+        };
+      });
+    } catch (error) {
+      console.error("❌ Error creating specializations:", error);
+      throw new GraphQLError(
+        `Failed to create specializations: ${error.message}`
+      );
+    }
+  };

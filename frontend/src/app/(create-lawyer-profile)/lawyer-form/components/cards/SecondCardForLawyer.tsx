@@ -6,6 +6,7 @@ import { Input, Textarea, Button } from "@/components/ui/index";
 import { ZodErrors } from "../ZodError";
 import { FormData } from "../../page";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
+import { GraduationCap } from "lucide-react";
 
 type Props = {
   errors: FieldErrors<FormData>;
@@ -35,12 +36,33 @@ const SecondCardForLawyer = ({
   const handlePreviousStep = goToPreviousStep;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Step Header */}
+      <div className="text-center">
+        <div className="w-16 h-16 bg-[#003366]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <GraduationCap className="w-8 h-8 text-[#003366]" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#003366] mb-2">
+          Мэргэжлийн мэдээлэл
+        </h2>
+        <p className="text-gray-600">
+          Өөрийн мэргэжлийн тухай мэдээллийг оруулна уу
+        </p>
+      </div>
+
       <div>
-        <label htmlFor="licenseNumber" className="block text-sm font-medium mb-1">
-          Өмгөөлөгчийн дугаар
+        <label
+          htmlFor="licenseNumber"
+          className="block text-sm font-semibold text-[#003366] mb-2"
+        >
+          Өмгөөлөгчийн дугаар *
         </label>
-        <Input id="licenseNumber" {...register("licenseNumber")} />
+        <Input
+          id="licenseNumber"
+          {...register("licenseNumber")}
+          className="border-[#003366]/30 focus:border-[#003366] focus:ring-[#003366]/20"
+          placeholder="Жишээ: LAW-2014-001"
+        />
         <ZodErrors
           error={
             errors.licenseNumber?.message
@@ -51,10 +73,18 @@ const SecondCardForLawyer = ({
       </div>
 
       <div>
-        <label htmlFor="university" className="block text-sm font-medium mb-1">
-          Их Сургуулийн Мэдээлэл
+        <label
+          htmlFor="university"
+          className="block text-sm font-semibold text-[#003366] mb-2"
+        >
+          Их Сургуулийн Мэдээлэл *
         </label>
-        <Input id="university" {...register("university")} />
+        <Input
+          id="university"
+          {...register("university")}
+          className="border-[#003366]/30 focus:border-[#003366] focus:ring-[#003366]/20"
+          placeholder="Жишээ: Монгол Улсын Их Сургууль"
+        />
         <ZodErrors
           error={
             errors.university?.message ? [errors.university.message] : undefined
@@ -63,11 +93,22 @@ const SecondCardForLawyer = ({
       </div>
 
       <div>
-        <label htmlFor="bio" className="block text-sm font-medium mb-1">
-          Мэргэжлийн намтар
+        <label
+          htmlFor="bio"
+          className="block text-sm font-semibold text-[#003366] mb-2"
+        >
+          Мэргэжлийн намтар *
         </label>
-        <Textarea id="bio" {...register("bio")} rows={4} />
-        <ZodErrors error={errors.bio?.message ? [errors.bio.message] : undefined} />
+        <Textarea
+          id="bio"
+          {...register("bio")}
+          rows={4}
+          className="border-[#003366]/30 focus:border-[#003366] focus:ring-[#003366]/20"
+          placeholder="Өөрийн мэргэжлийн туршлага, онцлогийг товчоор тайлбарлана уу..."
+        />
+        <ZodErrors
+          error={errors.bio?.message ? [errors.bio.message] : undefined}
+        />
       </div>
 
       <div>
@@ -92,7 +133,7 @@ const SecondCardForLawyer = ({
         </Button>
         <Button
           onClick={handleNextStep}
-          className="bg-blue-500 hover:bg-blue-400 cursor-pointer text-white"
+          className="bg-[#003366] hover:bg-[#003366]/80 cursor-pointer text-white"
         >
           Үргэжлүүлэх
         </Button>
@@ -102,4 +143,3 @@ const SecondCardForLawyer = ({
 };
 
 export default SecondCardForLawyer;
- 

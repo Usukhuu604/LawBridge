@@ -1,8 +1,8 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "@apollo/client";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import ChatRoom from "@/components/chat/ChatRoom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { debounce } from "lodash";
-import ChatroomHeader from "@/components/chat/ChatroomHeader";
 import ChatListItem from "@/components/chat/ChatListItem";
+import { ConnectionStatus } from "@/components/chat";
 import { SocketProvider } from "@/context/SocketContext";
 import { useGetChatRoomByUserQuery, useGetLawyerByIdQuery } from "@/generated";
 import { useDeleteAllMessages } from "@/hooks/useDeleteAllMessages";
@@ -27,7 +27,7 @@ import { useDeleteAllMessages } from "@/hooks/useDeleteAllMessages";
 // Using generated queries from @/generated
 
 // Using generated types from @/generated
-import type { GetChatRoomByUserQuery, GetLawyerByIdQuery } from "@/generated";
+import type { GetChatRoomByUserQuery } from "@/generated";
 
 type ChatRoom = GetChatRoomByUserQuery["getChatRoomByUser"][0];
 
@@ -87,6 +87,7 @@ const useNetworkStatus = () => {
 const MessengerLayoutContent = () => {
   const { user, isLoaded: userLoaded } = useUser();
   const userId = user?.id;
+  const searchParams = useSearchParams();
 
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,8 +99,7 @@ const MessengerLayoutContent = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Delete messages hook
-  const { deleteAllMessages, loading: isDeletingMessages } =
-    useDeleteAllMessages();
+  const { deleteAllMessages } = useDeleteAllMessages();
 
   const { isMobile, isTablet, isClient: responsiveClient } = useResponsive();
   const { isOnline, isClient: networkClient } = useNetworkStatus();
@@ -113,6 +113,19 @@ const MessengerLayoutContent = () => {
   useEffect(() => {
     debouncedSetSearch(searchQuery);
   }, [searchQuery, debouncedSetSearch]);
+
+  // Handle roomId from URL parameters
+  useEffect(() => {
+    const roomId = searchParams.get("roomId");
+    if (roomId) {
+      console.log("Setting selected room from URL:", roomId);
+      setSelectedRoomId(roomId);
+      // Close sidebar on mobile when room is selected from URL
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
+    }
+  }, [searchParams, isMobile]);
 
   // Auto-close sidebar on mobile when screen size changes
   useEffect(() => {
@@ -156,7 +169,7 @@ const MessengerLayoutContent = () => {
   );
 
   // Fetch lawyer info for the selected chat with error handling
-  const { data: selectedLawyerData } = useGetLawyerByIdQuery({
+  useGetLawyerByIdQuery({
     variables: { lawyerId: selectedOtherId || "" },
     skip: !selectedOtherId,
     errorPolicy: "all",
@@ -331,6 +344,8 @@ const MessengerLayoutContent = () => {
           Интернетийн холболт тасарсан байна
         </div>
       )}
+      {/* Socket connection status */}
+      <ConnectionStatus />
       {/* Main Content Container */}
       <div className="flex h-screen">
         {/* Sidebar */}

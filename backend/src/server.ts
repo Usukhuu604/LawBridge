@@ -50,55 +50,7 @@ async function startServer() {
   // CORS Configuration
   app.use(
     cors({
-      origin: function (origin, callback) {
-        const allowedOrigins = [
-          "http://localhost:3000",
-          "http://localhost:3001",
-          "http://localhost:3002",
-          "http://localhost:3003",
-          "http://localhost:3004",
-          "http://localhost:3005",
-          "http://127.0.0.1:3000",
-          "http://127.0.0.1:3001",
-          "http://127.0.0.1:3002",
-          "http://127.0.0.1:3003",
-          "http://127.0.0.1:3004",
-          "http://127.0.0.1:3005",
-          "https://studio.apollographql.com",
-          "https://studio.apollographql.com/sandbox/explorer",
-          "https://lawbridge-server.onrender.com",
-          "https://lawbridge-deploy.vercel.app",
-          "https://lawbridge11.vercel.app",
-          "https://lawbridge22.vercel.app",
-          "https://lawbridge33.vercel.app",
-          "https://lawbridge44.vercel.app",
-          "https://lawbridge55.vercel.app",
-          "https://lawbridge66.vercel.app",
-          "https://lawbridge77.vercel.app",
-          "https://lawbridge88.vercel.app",
-          "https://lawbridge99.vercel.app",
-          "https://lawbridge100.vercel.app",
-        ];
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) {
-          return callback(null, true);
-        }
-
-        // Check if origin is in allowed list
-        if (allowedOrigins.includes(origin)) {
-          return callback(null, true);
-        }
-
-        // Allow localhost with any port for development
-        if (
-          origin.match(/^https?:\/\/localhost:\d+$/) ||
-          origin.match(/^https?:\/\/127\.0\.0\.1:\d+$/)
-        ) {
-          return callback(null, true);
-        }
-
-        callback(new Error("Not allowed by CORS"));
-      },
+      origin: "*", // Allow all origins
       credentials: true,
     })
   );
@@ -276,33 +228,7 @@ async function startServer() {
   const io = new SocketIOServer(httpServer, {
     path: "/socket.io",
     cors: {
-      origin: [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://localhost:3003",
-        "http://localhost:3004",
-        "http://localhost:3005",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:3002",
-        "http://127.0.0.1:3003",
-        "http://127.0.0.1:3004",
-        "http://127.0.0.1:3005",
-        "https://lawbridge-server.onrender.com",
-        "https://studio.apollographql.com/sandbox/explorer",
-        "https://lawbridge-deploy.vercel.app",
-        "https://lawbridge11.vercel.app",
-        "https://lawbridge22.vercel.app",
-        "https://lawbridge33.vercel.app",
-        "https://lawbridge44.vercel.app",
-        "https://lawbridge55.vercel.app",
-        "https://lawbridge66.vercel.app",
-        "https://lawbridge77.vercel.app",
-        "https://lawbridge88.vercel.app",
-        "https://lawbridge99.vercel.app",
-        "https://lawbridge100.vercel.app",
-      ],
+      origin: "*", // Allow all origins
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -556,7 +482,6 @@ async function startServer() {
   app.use(
     "/graphql",
     expressMiddleware(apolloServer, {
-
       context: async ({ req }) => {
         try {
           const context = await buildContext(req);

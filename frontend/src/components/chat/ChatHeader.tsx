@@ -85,13 +85,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </div>
         </div>
 
-        {/* Center area with email */}
+        {/* Center area */}
         <div className="flex-1 flex justify-center">
-          {user.email && (
-            <div className="text-sm text-gray-600 font-medium">
-              {user.email.split("@")[0]}
-            </div>
-          )}
+          <div className="text-sm text-gray-600 font-medium">Chat</div>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
           {/* End Appointment Button - Show only when appropriate */}

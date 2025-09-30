@@ -29,13 +29,7 @@ interface MessageListProps {
 }
 
 const MessageList: React.FC<MessageListProps> = React.memo(
-  ({
-    messages,
-    // ...existing code...
-    currentUserId,
-    isLoading = false,
-    otherUserAvatar,
-  }) => {
+  ({ messages, currentUserId, isLoading = false, otherUserAvatar }) => {
     const { user, isLoaded } = useUser();
 
     if (!isLoaded) {
@@ -66,7 +60,14 @@ const MessageList: React.FC<MessageListProps> = React.memo(
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => {
           const isOwnMessage = msg.userId === (currentUserId || user?.id);
-          return <MessageBubble key={`${msg.id}-${index}`} message={msg} isOwnMessage={isOwnMessage} otherUserAvatar={otherUserAvatar} />;
+          return (
+            <MessageBubble
+              key={`${msg.id}-${index}`}
+              message={msg}
+              isOwnMessage={isOwnMessage}
+              otherUserAvatar={otherUserAvatar}
+            />
+          );
         })}
       </div>
     );

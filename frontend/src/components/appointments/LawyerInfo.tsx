@@ -1,5 +1,4 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useGetLawyerByIdQuery } from "@/generated";
@@ -78,10 +77,10 @@ const LawyerInfo: React.FC<LawyerInfoProps> = ({
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Star className="h-4 w-4 text-yellow-500" />
             <span>{lawyer.rating}/5</span>
-            {lawyer.specialization && (
+            {lawyer.specialization && lawyer.specialization.length > 0 && (
               <>
                 <span>•</span>
-                <span>{lawyer.specialization.categoryName}</span>
+                <span>{lawyer.specialization[0].categoryName}</span>
               </>
             )}
           </div>
@@ -136,10 +135,10 @@ const LawyerInfo: React.FC<LawyerInfoProps> = ({
               <Star className="h-4 w-4 text-yellow-500" />
               <span>Үнэлгээ: {lawyer.rating}/5</span>
             </div>
-            {lawyer.specialization && (
+            {lawyer.specialization && lawyer.specialization.length > 0 && (
               <div className="flex items-center space-x-2">
                 <Shield className="h-4 w-4" />
-                <span>{lawyer.specialization.categoryName}</span>
+                <span>{lawyer.specialization[0].categoryName}</span>
               </div>
             )}
           </div>

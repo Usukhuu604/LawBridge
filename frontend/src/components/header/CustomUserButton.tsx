@@ -43,10 +43,15 @@ export default function CustomUserButton({
     return <UserButton afterSignOutUrl={afterSignOutUrl} />;
   }
 
-  const handleSignOut = () => {
-    signOut();
-    if (afterSignOutUrl) {
-      window.location.href = afterSignOutUrl;
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirectUrl: afterSignOutUrl });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Fallback to manual redirect if signOut fails
+      if (afterSignOutUrl) {
+        window.location.href = afterSignOutUrl;
+      }
     }
   };
 

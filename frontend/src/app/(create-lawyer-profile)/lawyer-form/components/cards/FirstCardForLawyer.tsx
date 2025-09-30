@@ -1,13 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormGetValues } from "react-hook-form";
+import {
+  UseFormRegister,
+  FieldErrors,
+  UseFormSetValue,
+  UseFormGetValues,
+} from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ZodErrors } from "../ZodError";
 import { FormData } from "../../page";
 import { useUploadAvatar } from "../../hooks/useUploadAvatar";
 import Avatar from "../Avatar";
+import { User } from "lucide-react";
 
 type Props = {
   register: UseFormRegister<FormData>;
@@ -17,11 +23,25 @@ type Props = {
   getValues: UseFormGetValues<FormData>;
 };
 
-const FirstCardForLawyer = ({ register, errors, goToNextStep, setValue }: Props) => {
+const FirstCardForLawyer = ({
+  register,
+  errors,
+  goToNextStep,
+  setValue,
+}: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
 
-  const { fileInputRef, previewLink, uploading, isDragging, openBrowse, deleteImage, setIsDragging, uploadToServer } = useUploadAvatar({
+  const {
+    fileInputRef,
+    previewLink,
+    uploading,
+    isDragging,
+    openBrowse,
+    deleteImage,
+    setIsDragging,
+    uploadToServer,
+  } = useUploadAvatar({
     onUpload: (url: string) => {
       setValue("avatar", url);
     },
@@ -71,22 +91,59 @@ const FirstCardForLawyer = ({ register, errors, goToNextStep, setValue }: Props)
   }, [localPreview]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Step Header */}
+      <div className="text-center">
+        <div className="w-16 h-16 bg-[#003366]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <User className="w-8 h-8 text-[#003366]" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#003366] mb-2">
+          Хувийн мэдээлэл
+        </h2>
+        <p className="text-gray-600">
+          Өөрийн тухай үндсэн мэдээллийг оруулна уу
+        </p>
+      </div>
+
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium mb-1">
-            Нэр
+          <label
+            htmlFor="firstName"
+            className="block text-sm font-semibold text-[#003366] mb-2"
+          >
+            Нэр *
           </label>
-          <Input id="firstName" {...register("firstName")} />
-          <ZodErrors error={errors.firstName?.message ? [errors.firstName.message] : undefined} />
+          <Input
+            id="firstName"
+            {...register("firstName")}
+            className="border-[#003366]/30 focus:border-[#003366] focus:ring-[#003366]/20"
+            placeholder="Жишээ: Батбаяр"
+          />
+          <ZodErrors
+            error={
+              errors.firstName?.message ? [errors.firstName.message] : undefined
+            }
+          />
         </div>
 
         <div>
-          <label htmlFor="lastName" className="block text-sm font-medium mb-1">
-            Овог
+          <label
+            htmlFor="lastName"
+            className="block text-sm font-semibold text-[#003366] mb-2"
+          >
+            Овог *
           </label>
-          <Input id="lastName" {...register("lastName")} />
-          <ZodErrors error={errors.lastName?.message ? [errors.lastName.message] : undefined} />
+          <Input
+            id="lastName"
+            {...register("lastName")}
+            className="border-[#003366]/30 focus:border-[#003366] focus:ring-[#003366]/20"
+            placeholder="Жишээ: Мөнхбаяр"
+          />
+          <ZodErrors
+            error={
+              errors.lastName?.message ? [errors.lastName.message] : undefined
+            }
+          />
         </div>
       </div>
 
@@ -107,7 +164,10 @@ const FirstCardForLawyer = ({ register, errors, goToNextStep, setValue }: Props)
         setIsDragging={setIsDragging}
       />
 
-      <Button onClick={handleNextStep} className="w-full bg-blue-500 hover:bg-blue-400 cursor-pointer text-white">
+      <Button
+        onClick={handleNextStep}
+        className="w-full bg-[#003366] hover:bg-[#003366]/80 cursor-pointer text-white"
+      >
         Дараачийн
       </Button>
     </div>
