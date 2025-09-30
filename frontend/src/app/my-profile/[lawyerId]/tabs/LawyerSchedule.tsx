@@ -132,28 +132,17 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
 
   useEffect(() => {
     const now = new Date();
-    const cutoff = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1
-    );
-    const weekLater = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 7
-    );
+    const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const weekLater = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
 
     setAvailability((currentAvailability) => {
-      const newAvailability = Object.entries(currentAvailability).reduce(
-        (acc: Availability, [dateKey, slots]) => {
-          const dateObj = new Date(dateKey);
-          if (dateObj >= cutoff && dateObj <= weekLater) {
-            acc[dateKey] = slots;
-          }
-          return acc;
-        },
-        {}
-      );
+      const newAvailability = Object.entries(currentAvailability).reduce((acc: Availability, [dateKey, slots]) => {
+        const dateObj = new Date(dateKey);
+        if (dateObj >= cutoff && dateObj <= weekLater) {
+          acc[dateKey] = slots;
+        }
+        return acc;
+      }, {});
       return newAvailability;
     });
   }, []);
@@ -166,9 +155,7 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
   const toggleTimeSlot = (time: string) => {
     setAvailability((prev) => {
       const current = prev[selectedDateKey] || [];
-      const updated = current.includes(time)
-        ? current.filter((t) => t !== time)
-        : [...current, time].sort();
+      const updated = current.includes(time) ? current.filter((t) => t !== time) : [...current, time].sort();
       return {
         ...prev,
         [selectedDateKey]: updated,
@@ -183,22 +170,19 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
       // Remove the slot from local state first
       const updatedAvailability = { ...availability };
       if (updatedAvailability[dateKey]) {
-        updatedAvailability[dateKey] = updatedAvailability[dateKey].filter(
-          (t) => t !== time
-        );
+        updatedAvailability[dateKey] = updatedAvailability[dateKey].filter((t) => t !== time);
         if (updatedAvailability[dateKey].length === 0) {
           delete updatedAvailability[dateKey];
         }
       }
 
       // Convert updated availability to the format expected by setAvailability
-      const availableDays = Object.entries(updatedAvailability).flatMap(
-        ([date, slots]) =>
-          slots.map((startTime) => ({
-            day: date,
-            startTime,
-            endTime: addMinutesToTime(startTime, 30),
-          }))
+      const availableDays = Object.entries(updatedAvailability).flatMap(([date, slots]) =>
+        slots.map((startTime) => ({
+          day: date,
+          startTime,
+          endTime: addMinutesToTime(startTime, 30),
+        }))
       );
 
       // Update database with new availability (without the deleted slot)
@@ -223,13 +207,12 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
   const saveAvailability = async () => {
     setSaving(true);
     try {
-      const availableDays = Object.entries(availability).flatMap(
-        ([dateKey, slots]) =>
-          slots.map((startTime) => ({
-            day: dateKey,
-            startTime,
-            endTime: addMinutesToTime(startTime, 30),
-          }))
+      const availableDays = Object.entries(availability).flatMap(([dateKey, slots]) =>
+        slots.map((startTime) => ({
+          day: dateKey,
+          startTime,
+          endTime: addMinutesToTime(startTime, 30),
+        }))
       );
 
       if (availableDays.length === 0) {
@@ -307,9 +290,7 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
 
     setAvailability((prev) => ({
       ...prev,
-      [selectedDateKey]: [
-        ...new Set([...(prev[selectedDateKey] || []), ...slots]),
-      ].sort(),
+      [selectedDateKey]: [...new Set([...(prev[selectedDateKey] || []), ...slots])].sort(),
     }));
     showNotification(`${startHour}:00-${endHour}:00 цагууд нэмэгдлээ`);
   };
@@ -322,9 +303,7 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
       <div className="py-4 px-2 sm:p-6 lg:p-8 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003366] mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Хуваарь ачааллаж байна...
-          </p>
+          <p className="text-gray-600 text-sm sm:text-base">Хуваарь ачааллаж байна...</p>
         </div>
       </div>
     );
@@ -343,12 +322,8 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
         <div className="bg-white rounded-none sm:rounded-2xl border-0 sm:border border-gray-100 shadow-none sm:shadow-sm p-0 sm:p-4 mb-4 sm:mb-6">
           <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                Өдөр сонгох
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500">
-                7 хоногийн хуваарь
-              </p>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Өдөр сонгох</h2>
+              <p className="text-xs sm:text-sm text-gray-500">7 хоногийн хуваарь</p>
             </div>
 
             <div className="grid grid-cols-7 gap-1 sm:gap-3">
@@ -369,12 +344,8 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
                         : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <div className="text-sm sm:text-lg font-bold">
-                      {date.getDate()}
-                    </div>
-                    <div className="text-xs opacity-70 hidden sm:block">
-                      {date.toLocaleDateString("mn-MN", { weekday: "short" })}
-                    </div>
+                    <div className="text-sm sm:text-lg font-bold">{date.getDate()}</div>
+                    <div className="text-xs opacity-70 hidden sm:block">{date.toLocaleDateString("mn-MN", { weekday: "short" })}</div>
                     {hasSlots && (
                       <div
                         className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
@@ -392,12 +363,8 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
         <div className="bg-white rounded-none sm:rounded-2xl border-0 sm:border border-gray-100 shadow-none sm:shadow-sm p-0   sm:p-6">
           <div className="flex flex-col sm:flex-row sm:justify-between gap-3 mb-4 sm:mb-6">
             <div>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                Цаг сонгох
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Боломжит цагаа сонгоно уу
-              </p>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Цаг сонгох</h2>
+              <p className="text-xs sm:text-sm text-gray-500">Боломжит цагаа сонгоно уу</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -427,9 +394,7 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
                 }`}
               >
                 <div className="font-bold">{time}</div>
-                <div className="text-xs opacity-70 hidden sm:block">
-                  {addMinutesToTime(time, 60)}
-                </div>
+                <div className="text-xs opacity-70 hidden sm:block">{addMinutesToTime(time, 60)}</div>
               </button>
             ))}
           </div>
@@ -439,12 +404,8 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
               <div></div>
             ) : (
               <div className="text-center bg-blue-50 border border-gray-100 rounded-xl p-3 sm:p-5 mb-4 sm:mb-6">
-                <p className="text-gray-500 font-medium text-sm sm:text-base">
-                  Цаг сонгоно уу
-                </p>
-                <p className="text-gray-400 text-xs sm:text-sm">
-                  Дээрх цагнуудаас сонгож болно
-                </p>
+                <p className="text-gray-500 font-medium text-sm sm:text-base">Цаг сонгоно уу</p>
+                <p className="text-gray-400 text-xs sm:text-sm">Дээрх цагнуудаас сонгож болно</p>
               </div>
             )}
           </div>
@@ -491,12 +452,8 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
               <span className="text-white text-sm font-bold">EDIT</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Хуваарь шинэчлэх
-              </h3>
-              <p className="text-sm text-gray-500">
-                Хуучин цагийг шинэ цагаар солино
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">Хуваарь шинэчлэх</h3>
+              <p className="text-sm text-gray-500">Хуучин цагийг шинэ цагаар солино</p>
             </div>
           </div>
 
@@ -506,9 +463,7 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
               <input
                 type="date"
                 value={updateForm.oldDay}
-                onChange={(e) =>
-                  setUpdateForm((prev) => ({ ...prev, oldDay: e.target.value }))
-                }
+                onChange={(e) => setUpdateForm((prev) => ({ ...prev, oldDay: e.target.value }))}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="grid grid-cols-2 gap-2">
@@ -542,9 +497,7 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
               <input
                 type="date"
                 value={updateForm.newDay}
-                onChange={(e) =>
-                  setUpdateForm((prev) => ({ ...prev, newDay: e.target.value }))
-                }
+                onChange={(e) => setUpdateForm((prev) => ({ ...prev, newDay: e.target.value }))}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="grid grid-cols-2 gap-2">
@@ -601,53 +554,52 @@ export default function LawyerSchedule({ lawyerId }: LawyerScheduleProps) {
 
       {Object.keys(availability).length > 0 && (
         <div className="grid gap-4">
-          {Object.entries(availability).map(([dateKey, slots]) => (
-            <div
-              key={dateKey}
-              className="bg-gray-100 border border-emerald-100 rounded-xl p-5"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {new Date(dateKey).toLocaleDateString("mn-MN", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        weekday: "long",
-                      })}
-                    </h4>
+          {Object.entries(availability)
+            .filter(([dateKey]) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const dateObj = new Date(dateKey);
+              dateObj.setHours(0, 0, 0, 0);
+              return dateObj >= today;
+            })
+            .map(([dateKey, slots]) => (
+              <div key={dateKey} className="bg-gray-100 border border-emerald-100 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        {new Date(dateKey).toLocaleDateString("mn-MN", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          weekday: "long",
+                        })}
+                      </h4>
+                    </div>
                   </div>
+                  <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">{slots.length} цаг</span>
                 </div>
-                <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {slots.length} цаг
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {slots.map((slot) => (
-                  <div
-                    key={slot}
-                    className={`relative bg-white border border-emerald-200 rounded-lg px-3 py-2 text-center group hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer ${
-                      isDeleting ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                    onClick={() => !isDeleting && removeTimeSlot(dateKey, slot)}
-                  >
-                    <div className="text-sm font-semibold text-gray-900 group-hover:text-red-700">
-                      {slot}
-                    </div>
-                    <div className="text-xs text-gray-500 group-hover:text-red-500">
-                      {addMinutesToTime(slot, 60)}
-                    </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {slots.map((slot) => (
+                    <div
+                      key={slot}
+                      className={`relative bg-white border border-emerald-200 rounded-lg px-3 py-2 text-center group hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer ${
+                        isDeleting ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                      onClick={() => !isDeleting && removeTimeSlot(dateKey, slot)}
+                    >
+                      <div className="text-sm font-semibold text-gray-900 group-hover:text-red-700">{slot}</div>
+                      <div className="text-xs text-gray-500 group-hover:text-red-500">{addMinutesToTime(slot, 60)}</div>
 
-                    {/* X button that appears on hover */}
-                    <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold hover:bg-red-600">
-                      ×
+                      {/* X button that appears on hover */}
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold hover:bg-red-600">
+                        ×
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </div>
