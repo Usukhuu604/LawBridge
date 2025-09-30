@@ -1,15 +1,9 @@
 "use client";
 
-import {
-  ApolloClient,
-  InMemoryCache,
-  ApolloProvider,
-  createHttpLink,
-  from,
-} from "@apollo/client";
+import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink, from } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
-import { ReactNode, useMemo, useRef } from "react";
+import { ReactNode, useMemo } from "react";
 import { useAuth } from "@clerk/nextjs";
 
 const httpLink = createHttpLink({
@@ -17,29 +11,25 @@ const httpLink = createHttpLink({
 });
 
 // Create error link outside component to prevent recreation
-const errorLink = onError(
-  ({ graphQLErrors, networkError, operation, forward }) => {
-    if (graphQLErrors) {
-      graphQLErrors.forEach(({ message, locations, path }) =>
-        console.log(
-          `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
-        )
-      );
-    }
-    if (networkError) {
-      console.log(`[Network error]: ${networkError}`);
-      console.log(`[Network error details]:`, {
-        message: networkError.message,
-        name: networkError.name,
-        stack: networkError.stack,
-        operation: operation.operationName,
-      });
-    }
+const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) =>
+      console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`)
+    );
   }
-);
+  if (networkError) {
+    console.log(`[Network error]: ${networkError}`);
+    console.log(`[Network error details]:`, {
+      message: networkError.message,
+      name: networkError.name,
+      stack: networkError.stack,
+      operation: operation.operationName,
+    });
+  }
+});
 
 export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
-  const { userId, getToken, isLoaded } = useAuth();
+  const { getToken, isLoaded } = useAuth();
 
   // Create auth link that updates when userId changes
   const authLink = useMemo(
@@ -66,7 +56,7 @@ export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
           };
         }
       }),
-    [userId, getToken]
+    [getToken]
   );
 
   // Create client with proper dependencies to ensure it updates when auth changes
@@ -79,12 +69,12 @@ export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
             fields: {
               // Add field policies to prevent unnecessary refetches
               getLawyers: {
-                merge(existing = [], incoming) {
+                merge(_existing = [], incoming) {
                   return incoming;
                 },
               },
               getChatRoomByUser: {
-                merge(existing = [], incoming) {
+                merge(_existing = [], incoming) {
                   return incoming;
                 },
               },

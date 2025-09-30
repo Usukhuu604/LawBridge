@@ -1,13 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-  useCallback,
-} from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { io, Socket } from "socket.io-client";
 
@@ -22,12 +15,7 @@ interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   onlineUsers: User[];
-  sendMessage: (data: {
-    chatRoomId: string;
-    content: string;
-    userId: string;
-    type?: string;
-  }) => void;
+  sendMessage: (data: { chatRoomId: string; content: string; userId: string; type?: string }) => void;
   joinRoom: (chatRoomId: string) => void;
   leaveRoom: (chatRoomId: string) => void;
   emitTyping: (data: { chatRoomId: string; isTyping: boolean }) => void;
@@ -71,27 +59,24 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
         // Only create new socket if we don't have one or it's disconnected
         if (!socket || !socket.connected) {
-          const newSocket = io(
-            process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000",
-            {
-              path: "/socket.io",
-              auth: {
-                token: token,
-              },
-              transports: ["websocket", "polling"],
-              autoConnect: true,
-              reconnection: true,
-              reconnectionDelay: 1000,
-              reconnectionAttempts: 5,
-            }
-          );
+          const newSocket = io(process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000", {
+            path: "/socket.io",
+            auth: {
+              token: token,
+            },
+            transports: ["websocket", "polling"],
+            autoConnect: true,
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5,
+          });
 
           // Connection events
           newSocket.on("connect", () => {
             setIsConnected(true);
           });
 
-          newSocket.on("disconnect", (reason) => {
+          newSocket.on("disconnect", () => {
             setIsConnected(false);
           });
 
@@ -132,16 +117,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socket.disconnect();
       }
     };
-  }, [isLoaded, user]); // Removed getToken from dependencies to prevent reconnections
+  }, [isLoaded, user, getToken, socket]);
 
   // Socket utility functions
   const sendMessage = useCallback(
-    (data: {
-      chatRoomId: string;
-      content: string;
-      userId: string;
-      type?: string;
-    }) => {
+    (data: { chatRoomId: string; content: string; userId: string; type?: string }) => {
       if (socket && isConnected) {
         const messageData = {
           roomId: data.chatRoomId,
@@ -236,9 +216,5 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     offTyping,
   };
 
-  return (
-    <SocketContext.Provider value={contextValue}>
-      {children}
-    </SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={contextValue}>{children}</SocketContext.Provider>;
 };

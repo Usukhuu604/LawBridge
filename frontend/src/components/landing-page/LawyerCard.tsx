@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Badge } from "@/components/ui";
+import { Badge } from "@/components/ui";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GET_SPECIALIZATION_BY_LAWYER_ID } from "@/graphql/specializationsbylawyer";
@@ -12,8 +13,7 @@ type LawyerCardProps = {
   name: string;
   status: string;
   avatarImage?: string;
-  rating?: number;
-  reviewCount?: number;
+  // ...existing code...
 };
 
 const LawyerCard = ({
@@ -21,19 +21,13 @@ const LawyerCard = ({
   name,
   status,
   avatarImage,
-  rating,
-  reviewCount,
-}: LawyerCardProps) => {
-  const [activeSpecialtyIndex, setActiveSpecialtyIndex] = useState<
-    number | null
-  >(null);
+}: // ...existing code...
+LawyerCardProps) => {
+  const [activeSpecialtyIndex, setActiveSpecialtyIndex] = useState<number | null>(null);
 
-  const { data: specializationData, loading: specialLoad } = useQuery(
-    GET_SPECIALIZATION_BY_LAWYER_ID,
-    {
-      variables: { lawyerId: id },
-    }
-  );
+  const { data: specializationData, loading: specialLoad } = useQuery(GET_SPECIALIZATION_BY_LAWYER_ID, {
+    variables: { lawyerId: id },
+  });
 
   const handleClick = (index: number) => {
     setActiveSpecialtyIndex(activeSpecialtyIndex === index ? null : index);
@@ -76,14 +70,13 @@ const LawyerCard = ({
           <div className="flex items-center h-full relative z-10">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden mr-4 flex-shrink-0 ring-3 ring-white/50 shadow-xl group-hover:ring-white/80 group-hover:shadow-2xl group-hover:scale-105 transition-all duration-500">
               {avatarImage ? (
-                <img
-                  src={(
-                    process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN +
-                    "/" +
-                    avatarImage
-                  ).trim()}
+                <Image
+                  src={(process.env.NEXT_PUBLIC_R2_PUBLIC_DOMAIN + "/" + avatarImage).trim()}
                   alt={name}
+                  width={64}
+                  height={64}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  priority
                 />
               ) : (
                 <div className="w-full h-full bg-white/30 flex items-center justify-center text-white font-bold text-lg group-hover:bg-white/40 transition-all duration-300">
@@ -117,9 +110,7 @@ const LawyerCard = ({
           <div className="flex-1 min-h-[80px] sm:min-h-[90px] mb-3 sm:mb-4">
             {specialLoad ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-center text-sm text-gray-500">
-                  Ачааллаж байна...
-                </p>
+                <p className="text-center text-sm text-gray-500">Ачааллаж байна...</p>
               </div>
             ) : (
               <div className="flex flex-col gap-2 w-full">
@@ -156,9 +147,7 @@ const LawyerCard = ({
                       </span>
                       {activeSpecialtyIndex === index && (
                         <span className="block text-xs mt-1 opacity-90 break-words hyphens-auto overflow-hidden max-w-full">
-                          {spec.pricePerHour
-                            ? `₮${spec.pricePerHour.toLocaleString()}/цаг`
-                            : "үнэгүй"}
+                          {spec.pricePerHour ? `₮${spec.pricePerHour.toLocaleString()}/цаг` : "үнэгүй"}
                         </span>
                       )}
                     </Badge>
