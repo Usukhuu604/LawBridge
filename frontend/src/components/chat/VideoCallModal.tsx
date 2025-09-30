@@ -1,20 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  PhoneOff,
-  Monitor,
-  MonitorOff,
-  Maximize2,
-  Minimize2,
-  Signal,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
+import Image from "next/image";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Monitor, MonitorOff, Maximize2, Minimize2, Signal, Wifi, WifiOff } from "lucide-react";
 import {
   useLocalParticipant,
   useTracks,
@@ -33,11 +21,7 @@ interface VideoCallModalProps {
   callType: "video" | "audio";
 }
 
-export const VideoCallModal: React.FC<VideoCallModalProps> = ({
-  user,
-  onEndCall,
-  callType,
-}) => {
+export const VideoCallModal: React.FC<VideoCallModalProps> = ({ user, onEndCall, callType }) => {
   const { localParticipant } = useLocalParticipant();
   const remoteParticipants = useRemoteParticipants();
   const connectionState = useConnectionState();
@@ -53,33 +37,24 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
 
   useEffect(() => {
     if (remoteParticipants.length > 0) {
-      console.log("[LiveKit] Remote participant joined:", remoteParticipants.map(p => p.identity));
+      console.log(
+        "[LiveKit] Remote participant joined:",
+        remoteParticipants.map((p) => p.identity)
+      );
     }
-  }, [remoteParticipants.length]);
+  }, [remoteParticipants, remoteParticipants.length]);
 
   // Find all tracks in the room
   const tracks = useTracks();
-  const remoteVideoTrackRef = tracks.find(
-    (t) => t.source === Track.Source.Camera && !t.participant.isLocal
-  );
-  const remoteScreenShareTrackRef = tracks.find(
-    (t) => t.source === Track.Source.ScreenShare && !t.participant.isLocal
-  );
-  const localCameraTrackRef = tracks.find(
-    (t) => t.source === Track.Source.Camera && t.participant.isLocal
-  );
-  const localScreenShareTrackRef = tracks.find(
-    (t) => t.source === Track.Source.ScreenShare && t.participant.isLocal
-  );
+  const remoteVideoTrackRef = tracks.find((t) => t.source === Track.Source.Camera && !t.participant.isLocal);
+  const remoteScreenShareTrackRef = tracks.find((t) => t.source === Track.Source.ScreenShare && !t.participant.isLocal);
+  const localCameraTrackRef = tracks.find((t) => t.source === Track.Source.Camera && t.participant.isLocal);
+  const localScreenShareTrackRef = tracks.find((t) => t.source === Track.Source.ScreenShare && t.participant.isLocal);
 
   // State management
   const [isMuted, setIsMuted] = useState(!localParticipant.isMicrophoneEnabled);
-  const [isVideoOff, setIsVideoOff] = useState(
-    !localParticipant.isCameraEnabled || callType === "audio"
-  );
-  const [isScreenSharing, setIsScreenSharing] = useState(
-    !!localScreenShareTrackRef
-  );
+  const [isVideoOff, setIsVideoOff] = useState(!localParticipant.isCameraEnabled || callType === "audio");
+  const [isScreenSharing, setIsScreenSharing] = useState(!!localScreenShareTrackRef);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
@@ -99,11 +74,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
     setIsMuted(!localParticipant.isMicrophoneEnabled);
     setIsVideoOff(!localParticipant.isCameraEnabled);
     setIsScreenSharing(!!localScreenShareTrackRef);
-  }, [
-    localParticipant.isMicrophoneEnabled,
-    localParticipant.isCameraEnabled,
-    localScreenShareTrackRef,
-  ]);
+  }, [localParticipant.isMicrophoneEnabled, localParticipant.isCameraEnabled, localScreenShareTrackRef]);
 
   // Control functions
   const toggleMute = async () => {
@@ -147,9 +118,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Get connection quality indicator
@@ -173,56 +142,46 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       onTouchStart={() => setControlsVisible(true)}
     >
       {/* Self Preview at the Top (like Messenger) */}
-      {callType === "video" &&
-        !isVideoOff &&
-        localCameraTrackRef &&
-        !isScreenSharing && (
-          <div className="absolute top-4 right-4 z-30">
-            <div className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-white shadow-lg bg-black">
-              <VideoTrack
-                trackRef={localCameraTrackRef}
-                className="w-full h-full object-cover transform scale-x-[-1]" // << Mirror effect
-              />
-            </div>
+      {callType === "video" && !isVideoOff && localCameraTrackRef && !isScreenSharing && (
+        <div className="absolute top-4 right-4 z-30">
+          <div className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-white shadow-lg bg-black">
+            <VideoTrack
+              trackRef={localCameraTrackRef}
+              className="w-full h-full object-cover transform scale-x-[-1]" // << Mirror effect
+            />
           </div>
-        )}
+        </div>
+      )}
 
       {/* Top Status Bar */}
       <div
         className={cn(
           "absolute top-0 left-0 right-0 z-20 p-4 bg-gradient-to-b from-black/60 to-transparent backdrop-blur-sm transition-all duration-300",
-          controlsVisible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-full"
+          controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full"
         )}
       >
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt={user.name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full border-2 border-white/30"
+                  priority
                 />
               ) : null}
               <div>
                 <h3 className="font-semibold text-sm">{user.name}</h3>
-                <p className="text-xs text-slate-300">
-                  {remoteParticipants.length > 0
-                    ? formatDuration(callDuration)
-                    : "Connecting..."}
-                </p>
+                <p className="text-xs text-slate-300">{remoteParticipants.length > 0 ? formatDuration(callDuration) : "Connecting..."}</p>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {getConnectionQuality()}
-            <span className="text-xs text-slate-300">
-              {connectionState === ConnectionState.Connected
-                ? "Connected"
-                : "Connecting"}
-            </span>
+            <span className="text-xs text-slate-300">{connectionState === ConnectionState.Connected ? "Connected" : "Connecting"}</span>
           </div>
         </div>
       </div>
@@ -231,30 +190,17 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       <div className="relative w-full h-full flex items-center justify-center">
         {isScreenSharing && localScreenShareTrackRef ? (
           <div className="relative w-full h-full bg-black flex items-center justify-center">
-            <VideoTrack
-              trackRef={localScreenShareTrackRef}
-              className="w-full h-full object-contain"
-            />
-            <div className="absolute top-4 left-4 px-3 py-1 bg-red-600 text-white text-sm rounded-full font-medium">
-              Screen Sharing
-            </div>
+            <VideoTrack trackRef={localScreenShareTrackRef} className="w-full h-full object-contain" />
+            <div className="absolute top-4 left-4 px-3 py-1 bg-red-600 text-white text-sm rounded-full font-medium">Screen Sharing</div>
           </div>
         ) : remoteScreenShareTrackRef ? (
           <div className="relative w-full h-full bg-black flex items-center justify-center">
-            <VideoTrack
-              trackRef={remoteScreenShareTrackRef}
-              className="w-full h-full object-contain"
-            />
-            <div className="absolute top-4 left-4 px-3 py-1 bg-blue-600 text-white text-sm rounded-full font-medium">
-              Screen Sharing
-            </div>
+            <VideoTrack trackRef={remoteScreenShareTrackRef} className="w-full h-full object-contain" />
+            <div className="absolute top-4 left-4 px-3 py-1 bg-blue-600 text-white text-sm rounded-full font-medium">Screen Sharing</div>
           </div>
         ) : remoteVideoTrackRef ? (
           <div className="relative w-full h-full">
-            <VideoTrack
-              trackRef={remoteVideoTrackRef}
-              className="w-full h-full object-cover transform scale-x-[-1]"
-            />
+            <VideoTrack trackRef={remoteVideoTrackRef} className="w-full h-full object-cover transform scale-x-[-1]" />
             {/* Overlay for better text visibility */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20" />
           </div>
@@ -263,10 +209,13 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
             <div className="relative">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border-4 border-slate-600 shadow-2xl">
                 {user.avatar ? (
-                  <img
+                  <Image
                     src={user.avatar}
                     alt={user.name}
+                    width={128}
+                    height={128}
                     className="w-full h-full rounded-full object-cover"
+                    priority
                   />
                 ) : null}
               </div>
@@ -277,13 +226,9 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
               )}
             </div>
             <div className="text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                {remoteParticipants.length > 0 ? user.name : "Calling..."}
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{remoteParticipants.length > 0 ? user.name : "Calling..."}</h2>
               <p className="text-slate-400 text-lg">
-                {remoteParticipants.length > 0
-                  ? `In call • ${formatDuration(callDuration)}`
-                  : "Waiting for user to connect"}
+                {remoteParticipants.length > 0 ? `In call • ${formatDuration(callDuration)}` : "Waiting for user to connect"}
               </p>
             </div>
           </div>
@@ -296,18 +241,11 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       <div
         className={cn(
           "absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-300",
-          controlsVisible
-            ? "opacity-100 translate-y-0"
-            : "opacity-40 translate-y-2"
+          controlsVisible ? "opacity-100 translate-y-0" : "opacity-40 translate-y-2"
         )}
       >
         <div className="flex items-center gap-2 p-4 bg-black/60 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-          <ControlButton
-            onClick={toggleMute}
-            label={isMuted ? "Unmute" : "Mute"}
-            active={isMuted}
-            variant={isMuted ? "danger" : "default"}
-          >
+          <ControlButton onClick={toggleMute} label={isMuted ? "Unmute" : "Mute"} active={isMuted} variant={isMuted ? "danger" : "default"}>
             {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
           </ControlButton>
 
@@ -331,11 +269,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
             {isScreenSharing ? <MonitorOff size={20} /> : <Monitor size={20} />}
           </ControlButton>
 
-          <ControlButton
-            onClick={toggleFullscreen}
-            label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            active={isFullscreen}
-          >
+          <ControlButton onClick={toggleFullscreen} label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} active={isFullscreen}>
             {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
           </ControlButton>
 
@@ -378,17 +312,11 @@ const ControlButton: React.FC<{
   const getVariantClasses = () => {
     switch (variant) {
       case "primary":
-        return active
-          ? "bg-blue-600 hover:bg-blue-700 text-white"
-          : "bg-slate-700 hover:bg-slate-600 text-white";
+        return active ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-slate-700 hover:bg-slate-600 text-white";
       case "danger":
-        return active
-          ? "bg-red-600 hover:bg-red-700 text-white"
-          : "bg-slate-700 hover:bg-slate-600 text-white";
+        return active ? "bg-red-600 hover:bg-red-700 text-white" : "bg-slate-700 hover:bg-slate-600 text-white";
       default:
-        return active
-          ? "bg-slate-600 hover:bg-slate-500 text-white"
-          : "bg-slate-700 hover:bg-slate-600 text-white";
+        return active ? "bg-slate-600 hover:bg-slate-500 text-white" : "bg-slate-700 hover:bg-slate-600 text-white";
     }
   };
 

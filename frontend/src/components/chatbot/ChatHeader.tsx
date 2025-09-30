@@ -5,7 +5,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Trash2,
-  MoreVertical,
+  // ...existing code...
   RotateCcw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,13 +19,7 @@ interface ChatbotHeaderProps {
   isClearing?: boolean;
 }
 
-const ChatHeader: React.FC<ChatbotHeaderProps> = ({
-  stats,
-  connectionError,
-  isLoading,
-  onClearChat,
-  isClearing = false,
-}) => {
+const ChatHeader: React.FC<ChatbotHeaderProps> = ({ stats, connectionError, isLoading, onClearChat, isClearing = false }) => {
   const router = useRouter();
 
   const handleBack = () => {
@@ -64,9 +58,7 @@ const ChatHeader: React.FC<ChatbotHeaderProps> = ({
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-playfair-display bg-gradient-to-r from-[#003366] to-[#004080] bg-clip-text text-transparent">
               LawBridge AI
             </h1>
-            <p className="text-sm sm:text-base text-[#003366]/80 font-medium">
-              Хууль зүйн мэргэжлийн туслах
-            </p>
+            <p className="text-sm sm:text-base text-[#003366]/80 font-medium">Хууль зүйн мэргэжлийн туслах</p>
           </div>
         </div>
 
@@ -74,9 +66,7 @@ const ChatHeader: React.FC<ChatbotHeaderProps> = ({
           {connectionError && (
             <div className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl border border-red-200 shadow-sm">
               <AlertCircle className="w-4 h-4" />
-              <span className="hidden sm:inline font-medium">
-                Холболтын асуудал
-              </span>
+              <span className="hidden sm:inline font-medium">Холболтын асуудал</span>
               <span className="sm:hidden font-medium">Алдаа</span>
             </div>
           )}
@@ -84,12 +74,8 @@ const ChatHeader: React.FC<ChatbotHeaderProps> = ({
           {stats.messageCount > 0 && !connectionError && (
             <div className="flex items-center space-x-2 text-sm text-[#003366]/80 bg-[#003366]/10 px-3 py-2 rounded-xl border border-[#003366]/20 shadow-sm">
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline font-medium">
-                {stats.messageCount} мессеж
-              </span>
-              <span className="sm:hidden font-medium">
-                {stats.messageCount}
-              </span>
+              <span className="hidden sm:inline font-medium">{stats.messageCount} мессеж</span>
+              <span className="sm:hidden font-medium">{stats.messageCount}</span>
             </div>
           )}
 

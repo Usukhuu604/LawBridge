@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { User, Bot } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -19,16 +20,8 @@ interface ChatMessageBubbleProps {
   userAvatarUrl?: string;
 }
 
-const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
-  message,
-  isOwnMessage,
-  userAvatarUrl,
-}) => (
-  <div
-    className={`flex w-full items-start gap-3 ${
-      isOwnMessage ? "justify-end" : "justify-start"
-    }`}
-  >
+const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message, isOwnMessage, userAvatarUrl }) => (
+  <div className={`flex w-full items-start gap-3 ${isOwnMessage ? "justify-end" : "justify-start"}`}>
     {!isOwnMessage && (
       <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#003366] to-[#004080] flex items-center justify-center shadow-lg">
         <Bot className="w-5 h-5 text-white" />
@@ -45,18 +38,11 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            code: ({
-              inline,
-              className,
-              children,
-              ...props
-            }: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
+            code: ({ inline, className, children, ...props }: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => {
               const match = /language-(\w+)/.exec(className || "");
               let codeString = "";
               if (Array.isArray(children)) {
-                codeString = (children as (string | undefined)[])
-                  .filter((c): c is string => typeof c === "string")
-                  .join("");
+                codeString = (children as (string | undefined)[]).filter((c): c is string => typeof c === "string").join("");
               } else if (typeof children === "string") {
                 codeString = children;
               } else {
@@ -69,13 +55,7 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
               }
               codeString = codeString.replace(/\n$/, "");
               return !inline ? (
-                <SyntaxHighlighter
-                  style={vscDarkPlus}
-                  language={match?.[1] || "javascript"}
-                  PreTag="div"
-                  className="rounded-md"
-                  {...props}
-                >
+                <SyntaxHighlighter style={vscDarkPlus} language={match?.[1] || "javascript"} PreTag="div" className="rounded-md" {...props}>
                   {codeString}
                 </SyntaxHighlighter>
               ) : (
@@ -88,20 +68,12 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
         >
           {typeof message.text === "string"
             ? message.text
-            : typeof message.text === "object" &&
-              message.text !== null &&
-              "answer" in message.text
+            : typeof message.text === "object" && message.text !== null && "answer" in message.text
             ? String((message.text as { answer: string }).answer)
             : JSON.stringify(message.text)}
         </ReactMarkdown>
       </div>
-      <div
-        className={`text-xs mt-2 px-1 ${
-          isOwnMessage
-            ? "text-right text-white/70"
-            : "text-left text-[#003366]/60"
-        }`}
-      >
+      <div className={`text-xs mt-2 px-1 ${isOwnMessage ? "text-right text-white/70" : "text-left text-[#003366]/60"}`}>
         {message.timestamp.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -110,10 +82,13 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
     </div>
     {isOwnMessage &&
       (userAvatarUrl ? (
-        <img
+        <Image
           src={userAvatarUrl}
           alt="User avatar"
+          width={40}
+          height={40}
           className="w-10 h-10 rounded-2xl object-cover bg-[#003366]/10 border-2 border-[#003366]/20 shadow-lg"
+          priority
         />
       ) : (
         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#003366]/20 to-[#004080]/20 border-2 border-[#003366]/30 flex items-center justify-center shadow-lg">

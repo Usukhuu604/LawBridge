@@ -69,12 +69,12 @@ export const ApolloWrapper = ({ children }: { children: ReactNode }) => {
             fields: {
               // Add field policies to prevent unnecessary refetches
               getLawyers: {
-                merge(_existing = [], incoming) {
+                merge(_unused, incoming) {
                   return incoming;
                 },
               },
               getChatRoomByUser: {
-                merge(_existing = [], incoming) {
+                merge(_unused, incoming) {
                   return incoming;
                 },
               },

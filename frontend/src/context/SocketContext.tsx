@@ -40,14 +40,14 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const { user, isLoaded } = useUser();
+  const { isLoaded } = useUser();
   const { getToken } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded) return;
 
     const connectSocket = async () => {
       try {
@@ -117,7 +117,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socket.disconnect();
       }
     };
-  }, [isLoaded, user, getToken, socket]);
+  }, [isLoaded, getToken, socket]);
 
   // Socket utility functions
   const sendMessage = useCallback(
