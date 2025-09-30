@@ -7,10 +7,7 @@ const clerkClient = createClerkClient({
 });
 
 export const getPosts: QueryResolvers["getPosts"] = async () => {
-  const posts = await Post.find({})
-    .sort({ createdAt: -1 })
-    .populate("specialization")
-    .populate("comments");
+  const posts = await Post.find({}).sort({ createdAt: -1 }).populate("specialization").populate("comments");
 
   // Process posts with populated lawyer data
   const postsWithAuthors = await Promise.all(
@@ -20,13 +17,9 @@ export const getPosts: QueryResolvers["getPosts"] = async () => {
       try {
         console.log(`🔍 Looking up lawyer with ID: ${post.lawyerId}`);
         const lawyer = await Lawyer.findOne({ lawyerId: post.lawyerId }).lean();
-        console.log(
-          `👤 Found lawyer:`,
-          lawyer ? `${lawyer.firstName} ${lawyer.lastName}` : "Not found"
-        );
+        console.log(`👤 Found lawyer:`, lawyer ? `${lawyer.firstName} ${lawyer.lastName}` : "Not found");
 
         if (lawyer) {
-          console.log(`🖼️ Lawyer profilePicture:`, lawyer.profilePicture);
           author = {
             id: lawyer.lawyerId,
             firstName: lawyer.firstName,
@@ -36,7 +29,6 @@ export const getPosts: QueryResolvers["getPosts"] = async () => {
             email: lawyer.email,
             profilePicture: lawyer.profilePicture || null,
           };
-          console.log(`👤 Author object:`, author);
         } else {
           // Fallback if lawyer not found in database
           author = {
@@ -93,17 +85,11 @@ export const getPosts: QueryResolvers["getPosts"] = async () => {
               const clerkUser = await clerkClient.users.getUser(comment.author);
               authorInfo = {
                 id: clerkUser.id,
-                name:
-                  clerkUser.fullName ||
-                  clerkUser.emailAddresses[0]?.emailAddress ||
-                  comment.author,
+                name: clerkUser.fullName || clerkUser.emailAddresses[0]?.emailAddress || comment.author,
                 email: clerkUser.emailAddresses[0]?.emailAddress || null,
               };
             } catch (error) {
-              console.error(
-                `Failed to fetch user details for comment author ${comment.author}:`,
-                error
-              );
+              console.error(`Failed to fetch user details for comment author ${comment.author}:`, error);
               // Fallback to original author ID
             }
 

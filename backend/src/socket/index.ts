@@ -45,7 +45,6 @@ export function initializeSocketIO(io: Server) {
     const user = socket.data.user;
     if (!user) return;
 
-    console.log(`⚡ User connected: ${user.username} (Socket: ${socket.id})`);
     userManager.addUser({ ...user, socketId: socket.id });
 
     // Хэрэглэгчийн ID-р room-д join хийх (private room)
@@ -106,7 +105,6 @@ export function initializeSocketIO(io: Server) {
     socket.on(SOCKET_EVENTS.CLIENT_DISCONNECT, () => {
       const disconnectedUser = userManager.removeUser(socket.id);
       if (disconnectedUser) {
-        console.log(`❌ User disconnected: ${disconnectedUser.username} (Socket: ${socket.id})`);
         io.emit(SOCKET_EVENTS.SERVER_UPDATE_ONLINE_USERS, userManager.getOnlineUsers());
       }
     });

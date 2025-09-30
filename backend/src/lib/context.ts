@@ -30,10 +30,6 @@ export const buildContext = async (req: Request): Promise<Context> => {
       role = user.publicMetadata?.role as string;
       username = user.publicMetadata?.username as string;
 
-      console.log("👤 Verified Clerk User ID:", userId);
-      console.log("📛 Username:", username);
-      console.log("🧑‍⚖️ Role:", role);
-
       if (!role) {
         console.warn("❓ Unknown or missing role in metadata.");
       }
@@ -46,7 +42,6 @@ export const buildContext = async (req: Request): Promise<Context> => {
     } catch (err) {
       console.error("❌ Token verification failed:", err);
       // Don't throw error, just continue without authentication
-      console.log("⚠️ Continuing without authentication");
     }
   }
 
